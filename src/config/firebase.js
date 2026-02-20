@@ -7,13 +7,13 @@ import { getFirestore, setLogLevel } from "firebase/firestore";
 const firebaseConfig = typeof __firebase_config !== 'undefined'
     ? JSON.parse(__firebase_config)
     : {
-        apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAP7QvZ2jsr_-p3IeZ5Gwk1DbicXAavuaQ",
-        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "macro-f55fd.firebaseapp.com",
-        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "macro-f55fd",
-        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "macro-f55fd.firebasestorage.app",
-        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "442676998372",
-        appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:442676998372:web:cbc6f0cf90dbcc628f7cf1",
-        measurementId: "G-Q4Y13GXBSD"
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID,
+        measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
     };
 
 // Get app ID from platform or use default

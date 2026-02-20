@@ -24,7 +24,7 @@ import {
 import { auth, db, appId } from './config/firebase';
 
 // Utils
-import { playGoalSound } from './utils/sound';
+import { playGoalSound, resumeAudioContext } from './utils/sound';
 
 // Components
 import { Modal } from './components/ui/Modal';
@@ -167,6 +167,24 @@ const App = () => {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isErrorModalOpen, isEditModalOpen, isMealModalOpen, isGoalModalOpen, isAuthModalOpen, isManualEntryOpen, isScannerOpen, isHistoryModalOpen]);
+  
+  // --- Resume AudioContext on first user interaction ---
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      resumeAudioContext();
+      // Remove listener after first interaction
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
   
   // --- Theme Toggle ---
   useEffect(() => {
@@ -681,126 +699,32 @@ const App = () => {
 
     setIsLoading(true);
     localStorage.setItem(lastRequestKey, now.toString());
-    
-    const systemPrompt = `
-      You are a helpful nutrition assistant. Your task is to extract calorie, protein, carbohydrate, and fat information from the user's text.
-      If the user provides a food name (e.g., '200g chicken breast'), estimate all four macro values (Calories, Protein, Carbs, Fat).
-      If they provide numbers (e.g., 'add 200 calories, 15g protein, 5g fat, 20g carbs'), use those numbers.
-      The 'description' field must be a short name for the entry (e.g., 'Chicken Breast & Rice').
-      All values must be numbers (grams for macros, kcal for calories).
-      Respond ONLY with the requested JSON format. Do not add any other text or explanation.
-    `;
-
-    const schema = {
-      type: "OBJECT",
-      properties: {
-        description: { type: "STRING" },
-        calories: { type: "NUMBER" },
-        protein: { type: "NUMBER" },
-        carbs: { type: "NUMBER" },
-        fat: { type: "NUMBER" }
-      },
-      required: ["description", "calories", "protein", "carbs", "fat"]
-    };
-
-    const payload = {
-      contents: [{
-        role: "user",
-        parts: [{ text: `User input: "${aiInput}"` }]
-      }],
-      systemInstruction: {
-        parts: [{ text: systemPrompt }]
-      },
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: schema
-      }
-    };
-
-    // Use environment variable for API key
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyClUKtled3O8_0WcReJRLDSm27NU9f5zHs";
-    const modelCandidates = [
-      import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-flash"
-    ];
-    const normalizeModelName = (model) => model.replace(/^models\//, "");
-    const buildApiUrl = (model) => {
-      const normalized = normalizeModelName(model);
-      return `https://generativelanguage.googleapis.com/v1beta/models/${normalized}:generateContent?key=${apiKey}`;
-    };
 
     try {
-      let response;
-      let result;
-      let delay = 1000;
-      let lastError;
+      // Call serverless function to hide API key
+      const response = await fetch('/api/ai-food-entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: aiInput })
+      });
 
-      for (const model of modelCandidates) {
-        for (let i = 0; i < 3; i++) {
-          response = await fetch(buildApiUrl(model), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          if (response.ok) {
-            result = await response.json();
-            break;
-          }
-
-          if (response.status === 429 && i < 2) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2;
-            continue;
-          }
-
-          const errorText = await response.text();
-          lastError = new Error(`API call failed (${response.status}): ${errorText || response.statusText}`);
-
-          // Try next model if this one is unavailable or misconfigured.
-          if (response.status === 404 || response.status === 400) {
-            break;
-          }
-
-          throw lastError;
-        }
-
-        if (result) break;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API call failed (${response.status}): ${errorText || response.statusText}`);
       }
 
-      if (!result) {
-        throw lastError || new Error("AI request failed without a response.");
-      }
+      const result = await response.json();
 
-      const candidate = result?.candidates?.[0];
-      const jsonText = candidate?.content?.parts?.map(part => part.text || "").join("").trim();
-
-      if (candidate?.finishReason === "SAFETY") {
-        throw new Error("AI response blocked by safety filters.");
-      }
-
-      if (!jsonText) {
-        throw new Error("AI did not return valid JSON or response was empty.");
-      }
-
-      let parsedData;
-      try {
-        parsedData = JSON.parse(jsonText);
-      } catch (parseError) {
-        const start = jsonText.indexOf("{");
-        const end = jsonText.lastIndexOf("}");
-        if (start !== -1 && end !== -1 && end > start) {
-          parsedData = JSON.parse(jsonText.slice(start, end + 1));
-        } else {
-          throw parseError;
-        }
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       await addEntryToLog({
-        food: parsedData.description || "AI Entry",
-        calories: parsedData.calories,
-        protein: parsedData.protein,
-        carbs: parsedData.carbs,
-        fat: parsedData.fat,
+        food: result.description || "AI Entry",
+        calories: result.calories,
+        protein: result.protein,
+        carbs: result.carbs,
+        fat: result.fat,
       });
 
       setAiInput("");

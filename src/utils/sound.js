@@ -1,6 +1,27 @@
 // Goal achievement sound effect - simple success tone
+let audioContext = null;
+
+const getAudioContext = () => {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioContext;
+};
+
+export const resumeAudioContext = () => {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+};
+
 export const playGoalSound = () => {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audioContext = getAudioContext();
+  
+  // Resume if suspended
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
   
   // Create three ascending tones for a celebratory sound
   const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
