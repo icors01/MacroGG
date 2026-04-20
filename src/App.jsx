@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { 
   onAuthStateChanged,
   signInWithCustomToken, 
@@ -1828,6 +1829,7 @@ const App = () => {
           </>
         )}
       </div>
+      <Analytics />
     </div>
   );
 };
