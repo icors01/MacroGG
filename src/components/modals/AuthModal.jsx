@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, linkWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth, db, appId } from '../../config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Modal } from '../ui/Modal';
@@ -200,7 +200,10 @@ export const AuthModal = ({ isOpen, onClose, onShowError, allowClickOutside = fa
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Upgrade the guest account in place so its meals keep the same user ID.
+      const userCredential = auth.currentUser?.isAnonymous
+        ? await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(email, password))
+        : await createUserWithEmailAndPassword(auth, email, password);
       // Save username to Firestore
       const userDoc = doc(db, `artifacts/${appId}/users/${userCredential.user.uid}/settings/preferences`);
       await setDoc(userDoc, { username: username.trim() }, { merge: true });
