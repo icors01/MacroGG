@@ -958,7 +958,7 @@ const App = () => {
             .filter(meal => meal.id !== mealToDelete.id).map(meal => meal.id),
         });
       });
-      showError("Meal deleted", "success", { inline: true });
+      showError("Meal deleted", "success");
       return true;
     } catch (error) {
       console.error("Error deleting meal template: ", error);

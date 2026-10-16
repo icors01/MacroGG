@@ -292,6 +292,7 @@ export default function DemoApp() {
               setCustomMeals((meals) =>
                 meals.filter((saved) => saved.id !== meal.id),
               );
+              feedback.notify("Meal deleted", "success");
             }}
             {...colors}
           />
