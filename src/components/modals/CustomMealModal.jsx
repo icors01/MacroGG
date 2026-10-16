@@ -23,6 +23,7 @@ export const CustomMealModal = ({
     carbs: "",
     fat: "",
   });
+  const [saving, setSaving] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
   const [editMealData, setEditMealData] = useState(null);
@@ -35,8 +36,9 @@ export const CustomMealModal = ({
     }));
   };
 
-  const handleCreateSubmit = (e) => {
+  const handleCreateSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
 
     const dataToSave = {
       name: newMealData.name.trim(),
@@ -47,18 +49,24 @@ export const CustomMealModal = ({
     };
 
     if (dataToSave.name) {
-      onSaveMeal({
-        id: crypto.randomUUID(),
-        ...dataToSave,
-      });
-      setNewMealData({
-        name: "",
-        calories: "",
-        protein: "",
-        carbs: "",
-        fat: "",
-      });
-      setIsCreating(false);
+      setSaving(true);
+      try {
+        const saved = await onSaveMeal({
+          id: crypto.randomUUID(),
+          ...dataToSave,
+        });
+        if (saved === false) return;
+        setNewMealData({
+          name: "",
+          calories: "",
+          protein: "",
+          carbs: "",
+          fat: "",
+        });
+        setIsCreating(false);
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -81,8 +89,9 @@ export const CustomMealModal = ({
     }));
   };
 
-  const handleEditSubmit = (e, mealId) => {
+  const handleEditSubmit = async (e, mealId) => {
     e.preventDefault();
+    if (saving) return;
 
     const updatedMeal = {
       id: mealId,
@@ -94,9 +103,14 @@ export const CustomMealModal = ({
     };
 
     if (updatedMeal.name) {
-      onSaveMeal(updatedMeal);
-      setEditingMealId(null);
-      setEditMealData(null);
+      setSaving(true);
+      try {
+        if ((await onSaveMeal(updatedMeal)) === false) return;
+        setEditingMealId(null);
+        setEditMealData(null);
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -117,6 +131,7 @@ export const CustomMealModal = ({
       isOpen={isOpen}
       title="Saved meals"
       onClose={() => {
+        if (saving) return;
         onClose();
         setIsCreating(false);
       }}
@@ -181,7 +196,11 @@ export const CustomMealModal = ({
               >
                 Cancel
               </button>
-              <button type="submit" className="button button-primary">
+              <button
+                type="submit"
+                disabled={saving}
+                className="button button-primary"
+              >
                 Save meal
               </button>
             </div>
@@ -235,6 +254,7 @@ export const CustomMealModal = ({
                     <div className="flex gap-2">
                       <button
                         type="submit"
+                        disabled={saving}
                         className="button button-primary flex-1"
                         style={{ backgroundColor: primaryColor }}
                         onMouseEnter={(e) =>

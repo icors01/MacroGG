@@ -11,6 +11,7 @@ export const ScannerModal = ({
   allowClickOutside = false,
   primaryColor = "#22c55e",
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState(null);
   const [scannedCode, setScannedCode] = useState(null);
@@ -233,7 +234,8 @@ export const ScannerModal = ({
     }
   };
 
-  const handleFinalizeMeal = () => {
+  const handleFinalizeMeal = async () => {
+    if (isSaving) return;
     if (productData || combinedItems.length > 0) {
       // Add current product to the combined items if it exists
       const allItems = [...combinedItems];
@@ -265,14 +267,19 @@ export const ScannerModal = ({
         .map((item) => `${item.name} (${item.servings}x)`)
         .join(" + ");
 
-      onProductFound({
-        food: mealName,
-        calories: totalCalories,
-        protein: totalProtein,
-        carbs: totalCarbs,
-        fat: totalFat,
-      });
-      handleClose();
+      setIsSaving(true);
+      try {
+        const added = await onProductFound({
+          food: mealName,
+          calories: totalCalories,
+          protein: totalProtein,
+          carbs: totalCarbs,
+          fat: totalFat,
+        });
+        if (added !== false) handleClose();
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -550,6 +557,7 @@ export const ScannerModal = ({
               </div>
               <button
                 onClick={handleFinalizeMeal}
+                disabled={isSaving}
                 className="button button-primary w-full"
                 style={{ backgroundColor: primaryColor }}
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}

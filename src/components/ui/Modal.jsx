@@ -1,8 +1,12 @@
 import React, { useEffect, useId, useRef } from "react";
+import { useDialogFeedback, registerDialogLookup } from "./Feedback";
 import { X } from "lucide-react";
 
 const openDialogs = [];
 let originalOverflow = "";
+registerDialogLookup(
+  () => [...openDialogs].sort((a, b) => a.zIndex - b.zIndex).at(-1)?.id || null,
+);
 
 export const Modal = ({
   isOpen,
@@ -11,8 +15,11 @@ export const Modal = ({
   children,
   allowClickOutside = false,
   zIndex = 50,
+  showFeedbackError = true,
 }) => {
   const titleId = useId();
+  const feedback = useDialogFeedback();
+  const clearDialog = feedback?.clearDialog;
   const panel = useRef(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -20,7 +27,7 @@ export const Modal = ({
     if (!isOpen) return;
     const previous = document.activeElement;
     if (!openDialogs.length) originalOverflow = document.body.style.overflow;
-    const entry = { panel: panel.current, zIndex };
+    const entry = { panel: panel.current, zIndex, id: titleId };
     openDialogs.push(entry);
     const top = () =>
       [...openDialogs].sort((a, b) => a.zIndex - b.zIndex).at(-1);
@@ -37,6 +44,7 @@ export const Modal = ({
           ...panel.current.querySelectorAll(
             'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
           ),
+          ...document.querySelectorAll("[data-toast] button:not(:disabled)"),
         ].filter((el) => el.getClientRects().length);
         const first = elements[0];
         const last = elements.at(-1);
@@ -63,6 +71,7 @@ export const Modal = ({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => {
+      clearDialog?.(titleId);
       document.removeEventListener("keydown", onKeyDown);
       openDialogs.splice(openDialogs.indexOf(entry), 1);
       if (!openDialogs.length) {
@@ -72,7 +81,7 @@ export const Modal = ({
         top().panel?.focus();
       }
     };
-  }, [isOpen, zIndex]);
+  }, [isOpen, zIndex, titleId, clearDialog]);
   if (!isOpen) return null;
   return (
     <div
@@ -101,6 +110,14 @@ export const Modal = ({
             <X size={20} />
           </button>
         </div>
+        {showFeedbackError && feedback?.inline?.dialogId === titleId && (
+          <p
+            role={feedback.inline.type === "error" ? "alert" : "status"}
+            className={`dialog-feedback ${feedback.inline.type === "error" ? "dialog-danger" : "dialog-accent"}`}
+          >
+            {feedback.inline.message}
+          </p>
+        )}
         {children}
       </div>
     </div>

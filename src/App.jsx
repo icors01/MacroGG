@@ -15,7 +15,7 @@ import {
   getDoc,
   runTransaction
 } from "firebase/firestore";
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { FeedbackContext, Toast, useFeedback } from "./components/ui/Feedback";
 
 // Firebase configuration
 import { auth, db, appId } from './config/firebase';
@@ -83,9 +83,9 @@ const App = () => {
   // UI/Modal state
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-  const [notificationType, setNotificationType] = useState("success"); // 'success' or 'error'
+  const feedback = useFeedback();
+  const showError = feedback.notify;
+  const undoAction = React.useRef(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
@@ -151,12 +151,6 @@ const App = () => {
 
   // --- Utility Functions ---
 
-  const showError = (message, type = "error") => {
-    setModalMessage(message);
-    setNotificationType(type);
-    setIsErrorModalOpen(true);
-  };
-  
   // --- Resume AudioContext on first user interaction ---
   useEffect(() => {
     const handleUserInteraction = () => {
@@ -244,6 +238,7 @@ const App = () => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       // Discard unsaved goal-helper metrics when the account changes.
       setIsGoalModalOpen(false);
+      feedback.clear();
       if (user) {
         // User is signed in (either via token, email/password, or anonymously)
         setUserId(user.uid);
@@ -300,7 +295,7 @@ const App = () => {
       await updateDoc(settingsRef, { username: nameInput.trim() });
       setUsername(nameInput.trim());
       setIsEditingName(false);
-      showError("Name updated successfully!", "success");
+      showError("Name saved", "success");
     } catch (error) {
       console.error("Error updating name: ", error);
       showError("Error updating name: " + error.message);
@@ -329,7 +324,7 @@ const App = () => {
         setBackgroundColor(palette.backgroundColor);
         setWindowColor(palette.windowColor);
       }
-      showError('Settings saved successfully!', 'success');
+      showError('Settings saved', 'success');
       return true;
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -553,7 +548,6 @@ const App = () => {
   // --- Goal Handler ---
   const handleSaveGoals = async (goals) => {
     if (!dbInstance || !userId) {
-      showError("Goals update failed. Database not ready.");
       return false;
     }
     
@@ -569,18 +563,18 @@ const App = () => {
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
       await updateDoc(settingsRef, updatePayload);
+      showError("Goals saved", "success");
       return true;
     } catch (error) {
       console.error("Error setting new goal: ", error);
-      showError("Error setting goal: " + error.message);
       return false;
     }
   };
 
-  const addEntryToLog = useCallback(async (entry) => {
+  const addEntryToLog = useCallback(async (entry, { errorScope } = {}) => {
     if (!dbInstance || !userId) {
-      showError("Database not ready.");
-      return;
+      showError("Database not ready.", "error", { scope: errorScope });
+      return false;
     }
     
     const today = getLocalDateString();
@@ -615,9 +609,12 @@ const App = () => {
       // Add to undo stack as an addition and clear redo stack
       setUndoStack(prev => [...prev, { entry: newEntry, date: today, action: 'add' }]);
       setRedoStack([]);
+      showError("Food added", "success", { action: { label: "Undo", onClick: () => undoAction.current?.() } });
+      return true;
     } catch (error) {
       console.error("Error adding log entry: ", error);
-      showError("Error adding entry: " + error.message);
+      showError("Error adding entry: " + error.message, "error", { scope: errorScope });
+      return false;
     }
   }, [dbInstance, userId]);
 
@@ -634,7 +631,7 @@ const App = () => {
     
     if (lastRequest && (now - parseInt(lastRequest)) < cooldownMs) {
       const remaining = Math.ceil((cooldownMs - (now - parseInt(lastRequest))) / 1000);
-      showError(`Please wait ${remaining} seconds before making another AI request.`, "error");
+      showError(`Please wait ${remaining} seconds before making another AI request.`, "error", { scope: "food-entry" });
       return;
     }
 
@@ -660,20 +657,20 @@ const App = () => {
         throw new Error(result.error);
       }
 
-      await addEntryToLog({
+      const added = await addEntryToLog({
         food: result.description || "AI Entry",
         calories: result.calories,
         protein: result.protein,
         carbs: result.carbs,
         fat: result.fat,
-      });
+      }, { errorScope: "food-entry" });
 
-      setAiInput("");
+      if (added !== false) setAiInput("");
 
     } catch (error) {
       console.error("Error processing AI request: ", error);
       const errorMessage = error?.message ? `AI Error: ${error.message}` : "AI Error: Couldn't process the request.";
-      showError(`${errorMessage} Try rephrasing (e.g., 'Add 300 calories, 20g protein, 30g carbs, 10g fat').`);
+      showError(`${errorMessage} Try rephrasing (e.g., 'Add 300 calories, 20g protein, 30g carbs, 10g fat').`, 'error', { scope: 'food-entry' });
     } finally {
       setIsLoading(false);
     }
@@ -695,6 +692,7 @@ const App = () => {
       // Add to undo stack and clear redo stack
       setUndoStack(prev => [...prev, { entry: entryToDelete, date: today, action: 'delete' }]);
       setRedoStack([]);
+      showError("Entry deleted", "success", { action: { label: "Undo", onClick: () => undoAction.current?.() } });
     } catch (error) {
       console.error("Error deleting entry: ", error);
       showError("Error deleting entry: " + error.message);
@@ -702,7 +700,7 @@ const App = () => {
   };
 
   const handleUndoDelete = async () => {
-    if (undoStack.length === 0 || !dbInstance || !userId) return;
+    if (undoStack.length === 0 || !dbInstance || !userId) return false;
 
     try {
       // Get the last action
@@ -749,14 +747,17 @@ const App = () => {
         setUndoStack(prev => prev.slice(0, -1));
         setRedoStack(prev => [...prev, lastAction]);
       }
+      showError("Undone", "success");
+      return true;
     } catch (error) {
       console.error("Error undoing action: ", error);
       showError("Error undoing action: " + error.message);
+      return false;
     }
   };
 
   const handleRedoDelete = async () => {
-    if (redoStack.length === 0 || !dbInstance || !userId) return;
+    if (redoStack.length === 0 || !dbInstance || !userId) return false;
 
     try {
       // Get the last redone action
@@ -806,14 +807,17 @@ const App = () => {
         setRedoStack(prev => prev.slice(0, -1));
         setUndoStack(prev => [...prev, lastRedone]);
       }
+      showError("Redone", "success");
+      return true;
     } catch (error) {
       console.error("Error redoing action: ", error);
       showError("Error redoing action: " + error.message);
+      return false;
     }
   };
 
   const handleEditSave = async (updatedEntry) => {
-    if (!dbInstance || !userId) return;
+    if (!dbInstance || !userId) return false;
 
     const today = getLocalDateString();
 
@@ -825,17 +829,20 @@ const App = () => {
       await updateDoc(todayLogRef, {
         entries: [...updatedLog, updatedEntry]
       });
+      showError("Entry updated", "success");
+      return true;
 
     } catch (error) {
       console.error("Error updating entry: ", error);
       showError("Error updating entry: " + error.message);
+      return false;
     }
   };
 
   // --- Custom Meal Handlers ---
 
   const handleSaveMealTemplate = async (mealData) => {
-    if (!dbInstance || !userId) return;
+    if (!dbInstance || !userId) return false;
 
     const mealTemplate = {
       id: mealData.id || crypto.randomUUID(),
@@ -898,15 +905,17 @@ const App = () => {
           });
         }
       });
-      showError(`Custom meal "${mealTemplate.name}" saved!`, "success");
+      showError("Meal saved", "success", { inline: true });
+      return true;
     } catch (error) {
       console.error("Error saving meal template: ", error);
       showError("Error saving meal template: " + error.message);
+      return false;
     }
   };
 
   const handleAddMealToLog = (meal) => {
-    addEntryToLog({
+    return addEntryToLog({
       food: meal.name,
       calories: meal.calories,
       protein: meal.protein,
@@ -936,7 +945,7 @@ const App = () => {
   };
 
   const handleDeleteMealTemplate = async (mealToDelete) => {
-    if (!dbInstance || !userId) return;
+    if (!dbInstance || !userId) return false;
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
       await runTransaction(dbInstance, async transaction => {
@@ -949,9 +958,12 @@ const App = () => {
             .filter(meal => meal.id !== mealToDelete.id).map(meal => meal.id),
         });
       });
+      showError("Meal deleted", "success", { inline: true });
+      return true;
     } catch (error) {
       console.error("Error deleting meal template: ", error);
       showError("Error deleting meal template: " + error.message, "error");
+      return false;
     }
   };
 
@@ -979,7 +991,7 @@ const App = () => {
         ]);
         setRedoStack([]);
         
-        showError("Daily progress reset successfully!", "success");
+        showError("Today’s entries cleared", "success", { action: { label: "Undo", onClick: () => undoAction.current?.() } });
       } catch (error) {
         console.error("Error resetting progress: ", error);
         showError("Error resetting progress: " + error.message, "error");
@@ -1100,30 +1112,20 @@ const App = () => {
     calculateStreak();
   }, [foodLog, dbInstance, userId, appId]);
 
+  undoAction.current = handleUndoDelete;
+
   // --- Scanner Product Handler ---
-  const handleScannerProduct = (productEntry) => {
-    addEntryToLog(productEntry);
-    showError(`${productEntry.food} added to log!`, "success");
-  };
+  const handleScannerProduct = (productEntry) => addEntryToLog(productEntry);
 
   // --- Render ---
   return (
+    <FeedbackContext.Provider value={feedback.context}>
     <div className="app-shell" style={activeColorScheme ? getThemeStyle(activeColorScheme, isDarkMode) : { '--accent': primaryColor, '--secondary-accent': secondaryColor, ...(isDarkMode ? { '--page-bg': backgroundColor, '--surface': windowColor } : {}) }}>
       {showFireAnimation && <FireAnimation targetRef={historyButtonRef} />}
       
       <div className="app-container">
         
-        {/* Error/Notification Modal */}
-        <Modal isOpen={isErrorModalOpen} title="Notification" onClose={() => setIsErrorModalOpen(false)} zIndex={100} allowClickOutside>
-          <div className="dialog-message" role="status">
-            {notificationType === "success" ? <CheckCircle size={20} className="dialog-accent" /> : <AlertCircle size={20} className="dialog-danger" />}
-            <p>{modalMessage}</p>
-          </div>
-          <div className="dialog-actions">
-            <button className="button button-secondary" onClick={() => setIsErrorModalOpen(false)}>Close</button>
-          </div>
-        </Modal>
-
+        {/* Clearing entries still needs an explicit decision. */}
         <Modal isOpen={isResetConfirmOpen} title="Clear today's entries?" onClose={() => { if (!isResetting) setIsResetConfirmOpen(false); }}>
           <p>This clears today's food log. Your saved meals and daily goals stay saved. You can restore the entries with Undo.</p>
           <div className="dialog-actions">
@@ -1174,6 +1176,7 @@ const App = () => {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onShowError={showError}
+          onShowSuccess={message => showError(message, "success", { inline: true })}
           allowClickOutside={true}
           primaryColor={primaryColor}
         />
@@ -1342,7 +1345,9 @@ const App = () => {
           }}
         />
       </div>
+    <Toast toast={feedback.toast} onDismiss={feedback.dismiss} />
     </div>
+    </FeedbackContext.Provider>
   );
 };
 

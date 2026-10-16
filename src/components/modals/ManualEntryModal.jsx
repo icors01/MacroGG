@@ -26,8 +26,11 @@ export const ManualEntryModal = ({
     }));
   };
 
-  const handleSubmit = (e) => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
 
     const entry = {
       food: formData.food.trim(),
@@ -38,15 +41,20 @@ export const ManualEntryModal = ({
     };
 
     if (entry.food) {
-      onSave(entry);
-      setFormData({
-        food: "",
-        calories: "0",
-        protein: "0",
-        carbs: "0",
-        fat: "0",
-      });
-      onClose();
+      setSaving(true);
+      try {
+        if ((await onSave(entry)) === false) return;
+        setFormData({
+          food: "",
+          calories: "0",
+          protein: "0",
+          carbs: "0",
+          fat: "0",
+        });
+        onClose();
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -54,7 +62,9 @@ export const ManualEntryModal = ({
     <Modal
       isOpen={isOpen}
       title="Add entry"
-      onClose={onClose}
+      onClose={() => {
+        if (!saving) onClose();
+      }}
       allowClickOutside={allowClickOutside}
       titleColor={secondaryColor}
     >
@@ -165,6 +175,7 @@ export const ManualEntryModal = ({
 
         <button
           type="submit"
+          disabled={saving}
           className="button button-primary w-full mt-6"
           style={{ backgroundColor: primaryColor }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}

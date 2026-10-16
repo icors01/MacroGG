@@ -24,6 +24,7 @@ import {
   Heart,
   Loader2,
 } from "lucide-react";
+import { useDialogFeedback } from "./ui/Feedback";
 import { ProgressBar } from "./ui/ProgressBar";
 
 const number = (value) => Math.round(value || 0).toLocaleString();
@@ -46,6 +47,7 @@ export default function Dashboard({
   theme,
   historyButtonRef,
 }) {
+  const feedback = useDialogFeedback();
   const {
     totals,
     goals,
@@ -303,6 +305,11 @@ export default function Dashboard({
               <p className="muted entry-description">
                 Describe your food and we’ll estimate the macros.
               </p>
+              {feedback?.inline?.dialogId === "food-entry" && (
+                <p className="dialog-feedback dialog-danger" role="alert">
+                  {feedback.inline.message}
+                </p>
+              )}
               <form onSubmit={actions.onAiAdd}>
                 <label className="sr-only" htmlFor="ai-input">
                   Describe your food

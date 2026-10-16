@@ -49,6 +49,10 @@ Calculations use Mifflin–St Jeor and conservative calorie adjustments. An opti
 - **Recommendations:** appear after the same food and portion are logged on at least two different days within the last 30 days. More frequent and recent days rank higher.
 - **No duplicates:** pinned matches are hidden from recommendations. Tap any card to log it; use Undo to reverse the addition.
 
+## Quieter feedback
+
+Routine actions show a small, non-blocking message near the bottom of the screen. Adds, deletions, and clearing entries offer **Undo**. Saved-meal confirmations and form errors appear inside the current dialog; failed saves preserve the draft. Simple messages disappear after four seconds, Undo messages after ten, with dismissal paused while hovered or focused. Clearing entries still requires confirmation.
+
 ## Test and build
 
 ```bash

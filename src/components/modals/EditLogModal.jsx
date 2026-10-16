@@ -41,10 +41,17 @@ export const EditLogModal = ({
     }));
   };
 
-  const handleSubmit = (e) => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    if (saving) return;
+    setSaving(true);
+    try {
+      if ((await onSave(formData)) !== false) onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!item) return null;
@@ -53,7 +60,9 @@ export const EditLogModal = ({
     <Modal
       isOpen={isOpen}
       title="Edit entry"
-      onClose={onClose}
+      onClose={() => {
+        if (!saving) onClose();
+      }}
       allowClickOutside={allowClickOutside}
       titleColor="#3b82f6"
     >
@@ -99,6 +108,7 @@ export const EditLogModal = ({
         </div>
         <button
           type="submit"
+          disabled={saving}
           className="button button-primary w-full mt-6"
           style={{ backgroundColor: primaryColor }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
