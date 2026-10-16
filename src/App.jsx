@@ -464,10 +464,10 @@ const App = () => {
     const unsubscribeSettings = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setDailyGoal(data.dailyGoal || 2000);
-        setProteinGoal(data.proteinGoal || 150);
-        setCarbGoal(data.carbGoal || 250);
-        setFatGoal(data.fatGoal || 70);
+        setDailyGoal(data.dailyGoal ?? 2000);
+        setProteinGoal(data.proteinGoal ?? 150);
+        setCarbGoal(data.carbGoal ?? 250);
+        setFatGoal(data.fatGoal ?? 70);
         setCustomMeals(data.customMeals || []);
         setIsTrackingCarbs(data.isTrackingCarbs || false);
         setIsTrackingFat(data.isTrackingFat || false);

@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
-import { Modal } from '../ui/Modal';
-import { PlusCircle, Trash2, Edit2 } from 'lucide-react';
+import React, { useState } from "react";
+import { Modal } from "../ui/Modal";
+import { PlusCircle, Trash2, Edit2 } from "lucide-react";
 
-export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAddMeal, onDeleteMeal, allowClickOutside = false, secondaryColor = '#3b82f6', primaryColor = '#22c55e' }) => {
-  const [newMealData, setNewMealData] = useState({ 
-    name: '', 
-    calories: '', 
-    protein: '', 
-    carbs: '', 
-    fat: '' 
+export const CustomMealModal = ({
+  isOpen,
+  onClose,
+  customMeals,
+  onSaveMeal,
+  onAddMeal,
+  onDeleteMeal,
+  allowClickOutside = false,
+  secondaryColor = "#3b82f6",
+  primaryColor = "#22c55e",
+}) => {
+  const [newMealData, setNewMealData] = useState({
+    name: "",
+    calories: "",
+    protein: "",
+    carbs: "",
+    fat: "",
   });
   const [isCreating, setIsCreating] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
@@ -16,15 +26,15 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
 
   const handleNewMealChange = (e) => {
     const { name, value } = e.target;
-    setNewMealData(prev => ({
+    setNewMealData((prev) => ({
       ...prev,
-      [name]: value, 
+      [name]: value,
     }));
   };
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
-    
+
     const dataToSave = {
       name: newMealData.name.trim(),
       calories: parseFloat(newMealData.calories) || 0,
@@ -38,7 +48,13 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
         id: crypto.randomUUID(),
         ...dataToSave,
       });
-      setNewMealData({ name: '', calories: '', protein: '', carbs: '', fat: '' }); 
+      setNewMealData({
+        name: "",
+        calories: "",
+        protein: "",
+        carbs: "",
+        fat: "",
+      });
       setIsCreating(false);
     }
   };
@@ -50,21 +66,21 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
       calories: meal.calories.toString(),
       protein: meal.protein.toString(),
       carbs: meal.carbs.toString(),
-      fat: meal.fat.toString()
+      fat: meal.fat.toString(),
     });
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditMealData(prev => ({
+    setEditMealData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleEditSubmit = (e, mealId) => {
     e.preventDefault();
-    
+
     const updatedMeal = {
       id: mealId,
       name: editMealData.name.trim(),
@@ -85,21 +101,21 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
     setEditingMealId(null);
     setEditMealData(null);
   };
-  
+
   const macroPlaceholders = {
-    calories: 'Calories (kcal)',
-    protein: 'Protein (g)',
-    carbs: 'Carbs (g)',
-    fat: 'Fat (g)',
+    calories: "Calories (kcal)",
+    protein: "Protein (g)",
+    carbs: "Carbs (g)",
+    fat: "Fat (g)",
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       title="Saved meals"
-      onClose={() => { 
-        onClose(); 
-        setIsCreating(false); 
+      onClose={() => {
+        onClose();
+        setIsCreating(false);
       }}
       allowClickOutside={allowClickOutside}
       titleColor={secondaryColor}
@@ -109,14 +125,18 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
           onClick={() => setIsCreating(!isCreating)}
           className="w-full text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
           style={{ backgroundColor: secondaryColor }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          <PlusCircle size={18} /> {isCreating ? 'Cancel' : 'New meal'}
+          <PlusCircle size={18} /> {isCreating ? "Cancel" : "New meal"}
         </button>
 
         {isCreating && (
-          <form onSubmit={handleCreateSubmit} className="border p-4 rounded-lg bg-gray-700 space-y-3" style={{ borderColor: secondaryColor }}>
+          <form
+            onSubmit={handleCreateSubmit}
+            className="border p-4 rounded-lg bg-gray-700 space-y-3"
+            style={{ borderColor: secondaryColor }}
+          >
             <input
               type="text"
               name="name"
@@ -128,7 +148,7 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
               className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
             />
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {['calories', 'protein', 'carbs', 'fat'].map(macro => (
+              {["calories", "protein", "carbs", "fat"].map((macro) => (
                 <input
                   key={macro}
                   type="number"
@@ -138,17 +158,17 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                   value={newMealData[macro]}
                   onChange={handleNewMealChange}
                   min="0"
-                  required
+                  step={macro === "calories" ? "1" : "0.1"}
                   className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
                 />
               ))}
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="w-full text-white font-semibold py-2 rounded-lg transition-opacity"
               style={{ backgroundColor: secondaryColor }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               Save meal
             </button>
@@ -157,12 +177,20 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
 
         <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
           {customMeals.length === 0 ? (
-            <p className="text-gray-400 text-center pt-4">No saved meals yet. Add one you make often.</p>
+            <p className="text-gray-400 text-center pt-4">
+              No saved meals yet. Add one you make often.
+            </p>
           ) : (
-            customMeals.map(meal => (
-              <div key={meal.id} className="bg-gray-700 p-3 rounded-lg shadow-md">
+            customMeals.map((meal) => (
+              <div
+                key={meal.id}
+                className="bg-gray-700 p-3 rounded-lg shadow-md"
+              >
                 {editingMealId === meal.id ? (
-                  <form onSubmit={(e) => handleEditSubmit(e, meal.id)} className="space-y-3">
+                  <form
+                    onSubmit={(e) => handleEditSubmit(e, meal.id)}
+                    className="space-y-3"
+                  >
                     <input
                       type="text"
                       name="name"
@@ -174,32 +202,36 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                       className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      {['calories', 'protein', 'carbs', 'fat'].map(macro => (
+                      {["calories", "protein", "carbs", "fat"].map((macro) => (
                         <input
                           key={macro}
                           type="number"
                           name={macro}
                           aria-label={macroPlaceholders[macro]}
-                  placeholder={macroPlaceholders[macro]}
+                          placeholder={macroPlaceholders[macro]}
                           value={editMealData[macro]}
                           onChange={handleEditChange}
                           min="0"
-                          required
+                          step={macro === "calories" ? "1" : "0.1"}
                           className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
                         />
                       ))}
                     </div>
                     <div className="flex gap-2">
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         className="flex-1 text-white font-semibold py-2 rounded-lg transition-opacity"
                         style={{ backgroundColor: primaryColor }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.opacity = "0.8")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.opacity = "1")
+                        }
                       >
                         Save
                       </button>
-                      <button 
+                      <button
                         type="button"
                         onClick={handleCancelEdit}
                         className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg"
@@ -211,9 +243,12 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium text-gray-100 truncate">{meal.name}</p>
+                      <p className="text-base font-medium text-gray-100 truncate">
+                        {meal.name}
+                      </p>
                       <p className="text-xs text-gray-400">
-                        {meal.calories}kcal | P:{meal.protein}g | C:{meal.carbs}g | F:{meal.fat}g
+                        {meal.calories}kcal | P:{meal.protein}g | C:{meal.carbs}
+                        g | F:{meal.fat}g
                       </p>
                     </div>
                     <div className="flex gap-2 ml-4">
@@ -223,21 +258,24 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                           onAddMeal(meal);
                         }}
                         className="icon-button"
-                        title="Add to log" aria-label={`Add ${meal.name} to log`}
+                        title="Add to log"
+                        aria-label={`Add ${meal.name} to log`}
                       >
                         <PlusCircle size={20} />
                       </button>
                       <button
                         onClick={() => handleEditClick(meal)}
                         className="icon-button"
-                        title="Edit meal" aria-label={`Edit saved meal ${meal.name}`}
+                        title="Edit meal"
+                        aria-label={`Edit saved meal ${meal.name}`}
                       >
                         <Edit2 size={20} />
                       </button>
                       <button
                         onClick={() => onDeleteMeal(meal)}
                         className="icon-button"
-                        title="Delete meal" aria-label={`Delete saved meal ${meal.name}`}
+                        title="Delete meal"
+                        aria-label={`Delete saved meal ${meal.name}`}
                       >
                         <Trash2 size={20} />
                       </button>

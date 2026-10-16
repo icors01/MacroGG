@@ -1,27 +1,34 @@
-import React, { useState } from 'react';
-import { Modal } from '../ui/Modal';
-import { Save } from 'lucide-react';
+import React, { useState } from "react";
+import { Modal } from "../ui/Modal";
+import { Save } from "lucide-react";
 
-export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = false, secondaryColor = '#3b82f6', primaryColor = '#22c55e' }) => {
+export const ManualEntryModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  allowClickOutside = false,
+  secondaryColor = "#3b82f6",
+  primaryColor = "#22c55e",
+}) => {
   const [formData, setFormData] = useState({
-    food: '',
-    calories: '',
-    protein: '',
-    carbs: '',
-    fat: ''
+    food: "",
+    calories: "0",
+    protein: "0",
+    carbs: "0",
+    fat: "0",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     const entry = {
       food: formData.food.trim(),
       calories: parseFloat(formData.calories) || 0,
@@ -32,16 +39,35 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
 
     if (entry.food) {
       onSave(entry);
-      setFormData({ food: '', calories: '', protein: '', carbs: '', fat: '' });
+      setFormData({
+        food: "",
+        calories: "0",
+        protein: "0",
+        carbs: "0",
+        fat: "0",
+      });
       onClose();
     }
   };
 
   return (
-    <Modal isOpen={isOpen} title="Add Manual Entry" onClose={onClose} allowClickOutside={allowClickOutside} titleColor={secondaryColor}>
-      <form onSubmit={handleSubmit} className="space-y-4 text-gray-200">
+    <Modal
+      isOpen={isOpen}
+      title="Add Manual Entry"
+      onClose={onClose}
+      allowClickOutside={allowClickOutside}
+      titleColor={secondaryColor}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="manual-entry-form space-y-4 text-gray-200"
+      >
+        <p className="muted">Unused macros can stay at 0.</p>
         <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="manual-food">
+          <label
+            className="block text-sm font-medium mb-1"
+            htmlFor="manual-food"
+          >
             Food Description
           </label>
           <input
@@ -51,14 +77,17 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
             value={formData.food}
             onChange={handleChange}
             required
-            className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+            className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
             placeholder="e.g., Chicken Breast"
           />
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="manual-calories">
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="manual-calories"
+            >
               Calories (kcal)
             </label>
             <input
@@ -69,13 +98,16 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
               onChange={handleChange}
               min="0"
               step="1"
-              required
-              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+              placeholder="0"
+              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="manual-protein">
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="manual-protein"
+            >
               Protein (g)
             </label>
             <input
@@ -86,13 +118,16 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
               onChange={handleChange}
               min="0"
               step="0.1"
-              required
-              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+              placeholder="0"
+              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="manual-carbs">
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="manual-carbs"
+            >
               Carbs (g)
             </label>
             <input
@@ -103,13 +138,16 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
               onChange={handleChange}
               min="0"
               step="0.1"
-              required
-              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+              placeholder="0"
+              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="manual-fat">
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="manual-fat"
+            >
               Fat (g)
             </label>
             <input
@@ -120,8 +158,8 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
               onChange={handleChange}
               min="0"
               step="0.1"
-              required
-              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+              placeholder="0"
+              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
             />
           </div>
         </div>
@@ -130,8 +168,8 @@ export const ManualEntryModal = ({ isOpen, onClose, onSave, allowClickOutside = 
           type="submit"
           className="w-full text-white font-semibold py-2 rounded-lg transition-opacity flex items-center justify-center gap-2 mt-6"
           style={{ backgroundColor: primaryColor }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
           <Save size={18} /> Add Entry
         </button>

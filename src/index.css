@@ -1407,3 +1407,10 @@ h2 {
     display: block;
   }
 }
+
+/* Entry fields keep a quiet, neutral focus border rather than a colored ring. */
+.app-dialog .manual-entry-form input:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--muted);
+}
