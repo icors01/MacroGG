@@ -62,7 +62,6 @@ export const ManualEntryModal = ({
         onSubmit={handleSubmit}
         className="manual-entry-form space-y-4 text-gray-200"
       >
-        <p className="muted">Unused macros can stay at 0.</p>
         <div>
           <label
             className="block text-sm font-medium mb-1"
