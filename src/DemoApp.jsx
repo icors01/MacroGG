@@ -284,7 +284,7 @@ export default function DemoApp() {
                   ? meals.map((saved) => (saved.id === meal.id ? meal : saved))
                   : [...meals, { ...meal, id: crypto.randomUUID() }],
               );
-              feedback.notify("Meal saved", "success", { inline: true });
+              feedback.notify("Meal saved", "success");
               return true;
             }}
             onDeleteMeal={(meal) => {

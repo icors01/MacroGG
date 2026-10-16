@@ -905,7 +905,7 @@ const App = () => {
           });
         }
       });
-      showError("Meal saved", "success", { inline: true });
+      showError("Meal saved", "success");
       return true;
     } catch (error) {
       console.error("Error saving meal template: ", error);

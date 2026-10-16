@@ -51,7 +51,7 @@ Calculations use Mifflin–St Jeor and conservative calorie adjustments. An opti
 
 ## Quieter feedback
 
-Routine actions show a small, non-blocking message near the bottom of the screen. Adds, deletions, and clearing entries offer **Undo**. Saved-meal confirmations and form errors appear inside the current dialog; failed saves preserve the draft. All success messages, including Undo notifications, dismiss after three seconds. Toast dismissal pauses while hovered or focused; inline confirmations fade out. Errors stay visible until resolved or dismissed. Clearing entries still requires confirmation.
+Routine actions show a small, non-blocking message near the bottom of the screen. Adds, deletions, and clearing entries offer **Undo**. Saved meals use the same bottom toast. Form errors appear inside the current dialog; failed saves preserve the draft. All success messages, including Undo notifications, dismiss after two seconds. Toast dismissal pauses while hovered or focused; inline confirmations fade out. Errors stay visible until resolved or dismissed. Clearing entries still requires confirmation.
 
 ## Test and build
 
