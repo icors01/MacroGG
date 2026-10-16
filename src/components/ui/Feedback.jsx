@@ -43,7 +43,7 @@ export function useFeedback() {
       message,
       type,
       action: options.action,
-      duration: options.action ? 10000 : type === "error" ? 0 : 4000,
+      duration: type === "error" ? 0 : 3000,
     });
   }, []);
   useEffect(() => {
@@ -52,11 +52,11 @@ export function useFeedback() {
     const fade = setTimeout(
       () =>
         setInline((old) => (old?.id === id ? { ...old, fading: true } : old)),
-      5000,
+      3000,
     );
     const remove = setTimeout(
       () => setInline((old) => (old?.id === id ? null : old)),
-      5220,
+      3220,
     );
     return () => {
       clearTimeout(fade);
