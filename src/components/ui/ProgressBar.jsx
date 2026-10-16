@@ -1,30 +1,47 @@
-import React from 'react';
+import React from "react";
 
-export const ProgressBar = ({ current, goal, label, colorClass, color, isDarkMode = true }) => {
+export const ProgressBar = ({
+  current,
+  goal,
+  label,
+  colorClass,
+  color,
+  unit = "",
+}) => {
   const percentage = goal > 0 ? (current / goal) * 100 : 0;
-  const clampedPercentage = Math.min(percentage, 100);
-
   return (
-    <div className="w-full mb-4">
-      <div className="flex justify-between items-center mb-1 text-sm font-medium">
-        <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{label}</span>
-        <span className={`font-bold ${percentage > 100 ? 'text-red-400' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>
-          {Math.round(current)} / {goal}
+    <div className="macro-progress">
+      <div className="macro-label">
+        <span>
+          <i style={{ background: color }} />
+          {label}
+        </span>
+        <span>
+          <strong>{Math.round(current)}</strong>
+          <small>
+            {" "}
+            / {goal}
+            {unit}
+          </small>
         </span>
       </div>
-      <div className={`w-full rounded-full h-3.5 overflow-hidden shadow-inner ${
-        isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-      }`}>
+      <div
+        className="macro-track"
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={Math.max(goal, 1)}
+        aria-valuenow={Math.max(0, Math.min(current, Math.max(goal, 1)))}
+        aria-valuetext={`${Math.round(current)} of ${goal}${unit}`}
+      >
         <div
-          className={colorClass ? `h-3.5 rounded-full transition-all duration-500 ease-out ${colorClass}` : 'h-3.5 rounded-full transition-all duration-500 ease-out'}
-          style={{ width: `${clampedPercentage}%`, backgroundColor: color || undefined }}
-        ></div>
+          className={colorClass || ""}
+          style={{
+            width: `${Math.max(0, Math.min(percentage, 100))}%`,
+            backgroundColor: color,
+          }}
+        />
       </div>
-      {percentage > 100 && (
-        <div className="text-right text-xs text-red-400 mt-1">
-          Goal exceeded!
-        </div>
-      )}
     </div>
   );
 };

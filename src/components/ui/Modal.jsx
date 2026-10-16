@@ -1,29 +1,104 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect, useId, useRef } from "react";
+import { X } from "lucide-react";
 
-export const Modal = ({ isOpen, title, onClose, children, allowClickOutside = false, titleColor = '#22c55e' }) => {
+const openDialogs = [];
+let originalOverflow = "";
+
+export const Modal = ({
+  isOpen,
+  title,
+  onClose,
+  children,
+  allowClickOutside = false,
+  zIndex = 50,
+}) => {
+  const titleId = useId();
+  const panel = useRef(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement;
+    if (!openDialogs.length) originalOverflow = document.body.style.overflow;
+    const entry = { panel: panel.current, zIndex };
+    openDialogs.push(entry);
+    const top = () =>
+      [...openDialogs].sort((a, b) => a.zIndex - b.zIndex).at(-1);
+    document.body.style.overflow = "hidden";
+    panel.current?.focus();
+    const onKeyDown = (event) => {
+      if (top() !== entry) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close.current();
+      }
+      if (event.key === "Tab") {
+        const elements = [
+          ...panel.current.querySelectorAll(
+            'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
+          ),
+        ].filter((el) => el.getClientRects().length);
+        const first = elements[0];
+        const last = elements.at(-1);
+        if (!first) {
+          event.preventDefault();
+          return;
+        }
+        if (
+          event.shiftKey &&
+          (document.activeElement === first ||
+            document.activeElement === panel.current)
+        ) {
+          event.preventDefault();
+          last.focus();
+        } else if (
+          !event.shiftKey &&
+          (document.activeElement === last ||
+            document.activeElement === panel.current)
+        ) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      openDialogs.splice(openDialogs.indexOf(entry), 1);
+      if (!openDialogs.length) {
+        document.body.style.overflow = originalOverflow;
+        if (previous?.isConnected) previous.focus();
+      } else if (!top().panel?.contains(document.activeElement)) {
+        top().panel?.focus();
+      }
+    };
+  }, [isOpen, zIndex]);
   if (!isOpen) return null;
-  
-  const handleBackdropClick = (e) => {
-    if (allowClickOutside && e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-  
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center p-4"
-      style={{ zIndex: 50 }}
-      onClick={handleBackdropClick}
+    <div
+      className="dialog-backdrop"
+      style={{ zIndex }}
+      onClick={(e) => {
+        if (allowClickOutside && e.target === e.currentTarget) onClose();
+      }}
     >
-      <div 
-        className="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-lg w-full border border-gray-700"
-        onClick={(e) => e.stopPropagation()}
+      <div
+        ref={panel}
+        className="app-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
       >
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-bold" style={{ color: titleColor }}>{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-100 p-1">
-            <X size={24} />
+        <div className="dialog-heading">
+          <h2 id={titleId}>{title}</h2>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Close dialog"
+          >
+            <X size={20} />
           </button>
         </div>
         {children}
