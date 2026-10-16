@@ -631,7 +631,7 @@ const App = () => {
     
     if (lastRequest && (now - parseInt(lastRequest)) < cooldownMs) {
       const remaining = Math.ceil((cooldownMs - (now - parseInt(lastRequest))) / 1000);
-      showError(`Please wait ${remaining} seconds before making another AI request.`, "error", { scope: "food-entry" });
+      showError(`Please wait ${remaining} seconds before making another AI request.`, "info");
       return;
     }
 
@@ -873,7 +873,7 @@ const App = () => {
           );
 
           if (duplicateExists) {
-            throw new Error("A meal with the same name and macros already exists!");
+            throw Object.assign(new Error("A meal with the same name and macros already exists."), { code: "meal-already-exists" });
           }
 
           // Check if we're editing an existing meal
@@ -909,7 +909,7 @@ const App = () => {
       return true;
     } catch (error) {
       console.error("Error saving meal template: ", error);
-      showError("Error saving meal template: " + error.message);
+      showError(error.code === "meal-already-exists" ? error.message : "Error saving meal template: " + error.message, error.code === "meal-already-exists" ? "info" : "error");
       return false;
     }
   };
@@ -1022,7 +1022,7 @@ const App = () => {
     );
 
     if (existingMeal) {
-      showError(`A custom meal named "${logEntry.food}" already exists!`, "error");
+      showError(`A custom meal named "${logEntry.food}" already exists.`, "info");
       return;
     }
 

@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Check, AlertCircle, X } from "lucide-react";
+import { Check, AlertCircle, Info, X } from "lucide-react";
 
 export const FeedbackContext = createContext(null);
 export const useDialogFeedback = () => useContext(FeedbackContext);
@@ -121,6 +121,8 @@ export function Toast({ toast, onDismiss }) {
       >
         {toast.type === "error" ? (
           <AlertCircle size={17} />
+        ) : toast.type === "info" ? (
+          <Info size={17} />
         ) : (
           <Check size={17} />
         )}
