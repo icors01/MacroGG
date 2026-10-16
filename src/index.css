@@ -1659,9 +1659,13 @@ h2 {
 }
 .usual-chip > .chip-pin {
   position: absolute;
-  top: 5px;
-  right: 6px;
+  top: 3px;
+  left: 4px;
+  transform: rotate(-35deg);
   color: var(--muted);
+}
+.pinned-chip .usual-chip-copy {
+  padding-left: 8px;
 }
 .saved-meal-row {
   flex-wrap: wrap;
