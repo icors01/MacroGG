@@ -310,6 +310,18 @@ export default function Dashboard({
                   rows={2}
                   value={aiInput}
                   onChange={(e) => actions.onAiInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (
+                      e.key !== "Enter" ||
+                      e.shiftKey ||
+                      e.nativeEvent.isComposing ||
+                      e.keyCode === 229
+                    ) return;
+                    e.preventDefault();
+                    if (!e.repeat && !isLoading && aiInput.trim()) {
+                      e.currentTarget.form?.requestSubmit();
+                    }
+                  }}
                   placeholder="A bowl of oats, a banana, and a spoonful of peanut butter…"
                   disabled={isLoading}
                 />

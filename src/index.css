@@ -520,10 +520,10 @@ h2 {
   margin-bottom: 20px;
 }
 .entry-card textarea {
+  resize: none;
   display: block;
   width: 100%;
   min-height: 98px;
-  resize: vertical;
   background: var(--surface-soft);
   color: var(--text);
   padding: 14px 16px;
