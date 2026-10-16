@@ -121,21 +121,20 @@ export const CustomMealModal = ({
       titleColor={secondaryColor}
     >
       <div className="space-y-4">
-        <button
-          onClick={() => setIsCreating(!isCreating)}
-          className="w-full text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-          style={{ backgroundColor: secondaryColor }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-        >
-          <PlusCircle size={18} /> {isCreating ? "Cancel" : "New meal"}
-        </button>
+        {!isCreating && (
+          <button
+            type="button"
+            onClick={() => setIsCreating(true)}
+            className="button button-secondary w-full"
+          >
+            <PlusCircle size={18} /> New meal
+          </button>
+        )}
 
         {isCreating && (
           <form
             onSubmit={handleCreateSubmit}
             className="border p-4 rounded-lg bg-gray-700 space-y-3"
-            style={{ borderColor: secondaryColor }}
           >
             <input
               type="text"
@@ -163,15 +162,18 @@ export const CustomMealModal = ({
                 />
               ))}
             </div>
-            <button
-              type="submit"
-              className="w-full text-white font-semibold py-2 rounded-lg transition-opacity"
-              style={{ backgroundColor: secondaryColor }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              Save meal
-            </button>
+            <div className="flex justify-end gap-3 pt-1">
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => setIsCreating(false)}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="button button-primary">
+                Save meal
+              </button>
+            </div>
           </form>
         )}
 
