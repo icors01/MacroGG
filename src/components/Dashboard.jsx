@@ -364,33 +364,32 @@ export default function Dashboard({
               </p>
             </section>
 
-            {pinnedMeals.length > 0 && (
+            {(pinnedMeals.length > 0 || usualFoods.length > 0) && (
               <section
-                className="usuals-section pinned-section"
-                aria-labelledby="pinned-title"
+                className="usuals-section"
+                aria-labelledby="quick-add-title"
               >
                 <div className="usuals-heading">
-                  <h2 id="pinned-title">
-                    <Pin size={13} /> Pinned
-                  </h2>
+                  <h2 id="quick-add-title">Quick add</h2>
                   <button
                     type="button"
                     className="text-button"
                     onClick={actions.onMeals}
                   >
-                    Manage
+                    Manage meals
                   </button>
                 </div>
                 <div className="usual-foods">
                   {pinnedMeals.map((meal) => (
                     <button
                       type="button"
-                      key={meal.id}
+                      key={`pinned-${meal.id}`}
                       className="usual-chip pinned-chip"
                       onClick={() => actions.onPinnedAdd(meal)}
                       aria-label={`Add pinned ${meal.name}, ${number(meal.calories)} kcal`}
-                      title={`${meal.name} · ${number(meal.calories)} kcal`}
+                      title={`Pinned · ${meal.name} · ${number(meal.calories)} kcal`}
                     >
+                      <Pin size={10} className="chip-pin" aria-hidden="true" />
                       <span className="usual-chip-copy">
                         <strong>{meal.name}</strong>
                         <small>{number(meal.calories)} kcal</small>
@@ -398,20 +397,6 @@ export default function Dashboard({
                       <Plus size={15} />
                     </button>
                   ))}
-                </div>
-              </section>
-            )}
-
-            {usualFoods.length > 0 && (
-              <section
-                className="usuals-section"
-                aria-labelledby="usuals-title"
-              >
-                <div className="usuals-heading">
-                  <h2 id="usuals-title">Your usuals</h2>
-                  <span>From your last 30 days</span>
-                </div>
-                <div className="usual-foods">
                   {usualFoods.map((food) => (
                     <button
                       type="button"
