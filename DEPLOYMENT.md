@@ -54,3 +54,33 @@ Already configured with user-specific access control in Firestore rules.
 - The `.env` file is in `.gitignore` and won't be committed
 - Firebase config can remain public (it's designed to be)
 - **Only Gemini API key needs to be strictly private**
+
+## Password reset
+
+Forgot password uses Firebase Authentication's `sendPasswordResetEmail` and
+Firebase's hosted password-reset page. It does not require EmailJS, an API route,
+or Firestore reset documents. Firebase updates the existing account, preserving
+its user ID and saved meals.
+
+In the Firebase project used by the deployment, enable the Email/Password sign-in
+provider. Under Authentication → Templates → Password reset, check the sender
+and keep the default Firebase-hosted action URL unless you have implemented a
+custom action handler. The app does not implement a custom reset action page.
+
+After deploying, use a disposable registered account:
+
+1. Save a custom meal, sign out, and choose Forgot password → Send Reset Link.
+2. Open the email (check spam), follow the link, and choose a new password.
+3. Sign in with the new password and verify the saved meal is still present.
+4. Sign out and verify the old password fails and the used reset link cannot be
+   reused. Perform this last to avoid disrupting a valid test session.
+
+Run local regression checks with `node --test tests/*.test.js` and `npm run build`.
+Mocked checks do not establish real email delivery or production Firebase setup.
+
+Older versions wrote plaintext passwords to `password_resets` and `verifications`
+documents under `artifacts/{appId}`. The updated client no longer writes those
+passwords or uses stored reset passwords to sign in. Existing records are not
+automatically deleted: remove legacy password fields/records through a trusted
+admin process, review their Firestore access rules, and reset affected credentials
+if they were accessible to unauthorized users. Never export these values to logs.
