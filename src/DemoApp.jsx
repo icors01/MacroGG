@@ -5,6 +5,12 @@ import { ManualEntryModal } from "./components/modals/ManualEntryModal";
 import { CustomMealModal } from "./components/modals/CustomMealModal";
 import { EditLogModal } from "./components/modals/EditLogModal";
 import { GoalSettingModal } from "./components/modals/GoalSettingModal";
+import { SettingsModal } from "./components/modals/SettingsModal";
+import {
+  DEFAULT_SCHEME_ID,
+  getColorScheme,
+  getThemeStyle,
+} from "./utils/colorSchemes";
 
 const sampleMeals = [
   {
@@ -41,6 +47,10 @@ export default function DemoApp() {
   const [customMeals, setCustomMeals] = useState(sampleMeals.slice(0, 2));
   const [aiInput, setAiInput] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [colorScheme, setColorScheme] = useState(DEFAULT_SCHEME_ID);
+  const [previewColorScheme, setPreviewColorScheme] = useState(null);
+  const [username, setUsername] = useState("Alex");
+  const activeColorScheme = previewColorScheme || colorScheme;
   const [goals, setGoals] = useState({
     dailyGoal: 2000,
     proteinGoal: 140,
@@ -80,10 +90,21 @@ export default function DemoApp() {
     setMessage(text);
     setModal("info");
   };
-  const close = () => setModal(null);
-  const colors = { primaryColor: "#24634d", secondaryColor: "#496f8b" };
+  const close = () => {
+    setPreviewColorScheme(null);
+    setModal(null);
+  };
+  const palette =
+    getColorScheme(activeColorScheme)[isDarkMode ? "dark" : "light"];
+  const colors = {
+    primaryColor: palette.accent,
+    secondaryColor: palette.secondaryAccent,
+  };
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      style={getThemeStyle(activeColorScheme, isDarkMode)}
+    >
       <div className="app-container">
         <div className="demo-notice">
           <span className="status-dot" /> Design preview · Sample data only.
@@ -91,7 +112,7 @@ export default function DemoApp() {
         </div>
         <Dashboard
           theme={{ isDarkMode }}
-          account={{ username: "Alex", user: { email: "alex@example.com" } }}
+          account={{ username, user: { email: "alex@example.com" } }}
           data={{
             totals,
             goals,
@@ -126,10 +147,7 @@ export default function DemoApp() {
               inform(
                 "History opens your previous daily logs in the full app. This preview uses sample data only.",
               ),
-            onSettings: () =>
-              inform(
-                "Try the sun or moon button to preview both themes. Your account and color settings remain available in the full app.",
-              ),
+            onSettings: () => setModal("settings"),
             onSupport: () =>
               inform("Support options are available in the full app."),
             onSignOut: () =>
@@ -182,6 +200,19 @@ export default function DemoApp() {
                 "Saved to your demo meals. Refreshing the page restores the original samples.",
               );
             },
+          }}
+        />
+        <SettingsModal
+          isOpen={modal === "settings"}
+          onClose={close}
+          colorScheme={colorScheme}
+          username={username}
+          isDarkMode={isDarkMode}
+          onPreview={setPreviewColorScheme}
+          onSave={async (settings) => {
+            setColorScheme(settings.colorScheme);
+            setUsername(settings.username);
+            return true;
           }}
         />
         <ManualEntryModal

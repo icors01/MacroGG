@@ -23,6 +23,7 @@ import { auth, db, appId } from './config/firebase';
 // Utils
 import { playGoalSound, resumeAudioContext } from './utils/sound';
 import { initializeSettings } from './utils/settings';
+import { DEFAULT_SCHEME_ID, getThemeStyle, getSchemeSettings, isColorScheme } from './utils/colorSchemes';
 
 // Components
 import { Modal } from './components/ui/Modal';
@@ -101,6 +102,13 @@ const App = () => {
     return saved ? saved === 'dark' : false;
   });
   
+  const [colorScheme, setColorScheme] = useState(() => {
+    const saved = localStorage.getItem('colorScheme');
+    return isColorScheme(saved) ? saved : (localStorage.getItem('primaryColor') ? null : DEFAULT_SCHEME_ID);
+  });
+  const [previewColorScheme, setPreviewColorScheme] = useState(null);
+  const activeColorScheme = previewColorScheme || colorScheme;
+
   // Color customization state
   const [primaryColor, setPrimaryColor] = useState(() => {
     return localStorage.getItem('primaryColor') || '#24634d';
@@ -194,6 +202,12 @@ const App = () => {
     }
   }, [isDarkMode]);
   
+  // Only the saved scheme is persisted. Preview changes remain in memory.
+  useEffect(() => {
+    if (colorScheme) localStorage.setItem('colorScheme', colorScheme);
+    else localStorage.removeItem('colorScheme');
+  }, [colorScheme]);
+
   // Save color preferences
   useEffect(() => {
     localStorage.setItem('primaryColor', primaryColor);
@@ -305,49 +319,31 @@ const App = () => {
   
   // Function to save settings
   const handleSaveSettings = async (settings) => {
-    if (!dbInstance || !userId) return;
-    
+    if (!dbInstance || !userId) throw new Error('Please sign in before saving your settings.');
+    const schemeId = isColorScheme(settings.colorScheme) ? settings.colorScheme : null;
+    const palette = getSchemeSettings(schemeId);
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
-      await updateDoc(settingsRef, {
-        username: settings.username,
-        primaryColor: settings.primaryColor,
-        secondaryColor: settings.secondaryColor,
-        nameGradientStart: settings.nameGradientStart,
-        nameGradientMiddle: settings.nameGradientMiddle,
-        nameGradientEnd: settings.nameGradientEnd,
-        nameGlow: settings.nameGlow,
-        nameGlowIntensity: settings.nameGlowIntensity,
-        backgroundColor: settings.backgroundColor,
-        windowColor: settings.windowColor
-      });
-      
-      // Update local state and localStorage
+      // Update only appearance/profile fields. Saved meals and goals are untouched.
+      await updateDoc(settingsRef, { username: settings.username, colorScheme: schemeId, ...palette });
       setUsername(settings.username);
-      setPrimaryColor(settings.primaryColor);
-      setSecondaryColor(settings.secondaryColor);
-      setNameGradientStart(settings.nameGradientStart);
-      setNameGradientMiddle(settings.nameGradientMiddle);
-      setNameGradientEnd(settings.nameGradientEnd);
-      setNameGlow(settings.nameGlow);
-      setNameGlowIntensity(settings.nameGlowIntensity);
-      setBackgroundColor(settings.backgroundColor);
-      setWindowColor(settings.windowColor);
-      
-      localStorage.setItem('primaryColor', settings.primaryColor);
-      localStorage.setItem('secondaryColor', settings.secondaryColor);
-      localStorage.setItem('nameGradientStart', settings.nameGradientStart);
-      localStorage.setItem('nameGradientMiddle', settings.nameGradientMiddle);
-      localStorage.setItem('nameGradientEnd', settings.nameGradientEnd);
-      localStorage.setItem('nameGlow', settings.nameGlow);
-      localStorage.setItem('nameGlowIntensity', settings.nameGlowIntensity.toString());
-      localStorage.setItem('backgroundColor', settings.backgroundColor);
-      localStorage.setItem('windowColor', settings.windowColor);
-      
-      showError("Settings saved successfully!", "success");
+      setColorScheme(schemeId);
+      if (schemeId) {
+        setPrimaryColor(palette.primaryColor);
+        setSecondaryColor(palette.secondaryColor);
+        setNameGradientStart(palette.nameGradientStart);
+        setNameGradientMiddle(palette.nameGradientMiddle);
+        setNameGradientEnd(palette.nameGradientEnd);
+        setNameGlow(palette.nameGlow);
+        setNameGlowIntensity(palette.nameGlowIntensity);
+        setBackgroundColor(palette.backgroundColor);
+        setWindowColor(palette.windowColor);
+      }
+      showError('Settings saved successfully!', 'success');
+      return true;
     } catch (error) {
-      console.error("Error saving settings: ", error);
-      showError("Error saving settings: " + error.message);
+      console.error('Error saving settings:', error);
+      throw new Error('Your settings could not be saved. Please try again.');
     }
   };
 
@@ -365,6 +361,8 @@ const App = () => {
         setCustomMeals([]);
         
         // Reset color settings to defaults
+        setColorScheme(DEFAULT_SCHEME_ID);
+        setPreviewColorScheme(null);
         setPrimaryColor('#24634d');
         setSecondaryColor('#496f8b');
         setNameGradientStart('#24634d');
@@ -475,6 +473,8 @@ const App = () => {
         setIsTrackingFat(data.isTrackingFat || false);
         setUsername(data.username || '');
         
+        // Legacy custom colors remain intact until a named scheme is chosen.
+        setColorScheme(isColorScheme(data.colorScheme) ? data.colorScheme : (data.primaryColor ? null : DEFAULT_SCHEME_ID));
         // Load color settings from Firestore
         if (data.primaryColor) setPrimaryColor(data.primaryColor);
         if (data.secondaryColor) setSecondaryColor(data.secondaryColor);
@@ -1114,7 +1114,7 @@ const App = () => {
 
   // --- Render ---
   return (
-    <div className="app-shell" style={{ '--accent': primaryColor, '--secondary-accent': secondaryColor, ...(isDarkMode ? { '--page-bg': backgroundColor, '--surface': windowColor } : {}) }}>
+    <div className="app-shell" style={activeColorScheme ? getThemeStyle(activeColorScheme, isDarkMode) : { '--accent': primaryColor, '--secondary-accent': secondaryColor, ...(isDarkMode ? { '--page-bg': backgroundColor, '--surface': windowColor } : {}) }}>
       {showFireAnimation && <FireAnimation targetRef={historyButtonRef} />}
       
       <div className="app-container">
@@ -1225,20 +1225,11 @@ const App = () => {
         {/* Settings Modal */}
         <SettingsModal
           isOpen={isSettingsOpen}
-          onClose={() => {
-            console.log('Settings modal onClose called');
-            setIsSettingsOpen(false);
-          }}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          nameGradientStart={nameGradientStart}
-          nameGradientMiddle={nameGradientMiddle}
-          nameGradientEnd={nameGradientEnd}
-          nameGlow={nameGlow}
-          nameGlowIntensity={nameGlowIntensity}
-          backgroundColor={backgroundColor}
-          windowColor={windowColor}
+          onClose={() => { setPreviewColorScheme(null); setIsSettingsOpen(false); }}
+          colorScheme={colorScheme}
           username={username}
+          isDarkMode={isDarkMode}
+          onPreview={setPreviewColorScheme}
           onSave={handleSaveSettings}
           allowClickOutside={false}
         />
@@ -1358,7 +1349,7 @@ const App = () => {
           historyButtonRef={historyButtonRef}
           theme={{ isDarkMode }}
           data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, recentFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
-          account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
+          account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: activeColorScheme ? { color: 'var(--accent-text, var(--accent))' } : { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
           actions={{
             onSupport: () => setIsSupportModalOpen(true), onToggleTheme: toggleTheme,
             onSettings: () => setIsSettingsOpen(true), onSignOut: handleSignOut,

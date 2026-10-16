@@ -80,7 +80,8 @@ http://localhost:5173/?demo
 
 The development-only demo uses sample data in memory. Try adding and editing
 entries, saving meal templates, adjusting goals, undo/redo, and the light/dark
-switch. Refresh restores the samples. It does not import Firebase configuration,
+switch. Settings includes six named color schemes with a live preview; Cancel
+restores the previous look, and Save keeps it for the current demo session. Refresh restores the samples. It does not import Firebase configuration,
 send emails, call AI, access your camera, or update real accounts. The banner
 identifies demo mode; it is excluded from production builds.
 
