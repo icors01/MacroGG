@@ -96,7 +96,7 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
   return (
     <Modal 
       isOpen={isOpen} 
-      title="Manage Custom Meals" 
+      title="Saved meals"
       onClose={() => { 
         onClose(); 
         setIsCreating(false); 
@@ -112,7 +112,7 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
           onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
           onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
         >
-          <PlusCircle size={18} /> {isCreating ? 'Cancel Creation' : 'Create New Meal'}
+          <PlusCircle size={18} /> {isCreating ? 'Cancel' : 'New meal'}
         </button>
 
         {isCreating && (
@@ -120,6 +120,7 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
             <input
               type="text"
               name="name"
+              aria-label="Meal name"
               placeholder="Meal Name (e.g., Post-Workout Shake)"
               value={newMealData.name}
               onChange={handleNewMealChange}
@@ -132,6 +133,7 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                   key={macro}
                   type="number"
                   name={macro}
+                  aria-label={macroPlaceholders[macro]}
                   placeholder={macroPlaceholders[macro]}
                   value={newMealData[macro]}
                   onChange={handleNewMealChange}
@@ -148,14 +150,14 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
-              Save Meal Template
+              Save meal
             </button>
           </form>
         )}
 
         <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
           {customMeals.length === 0 ? (
-            <p className="text-gray-400 text-center pt-4">No custom meals saved yet.</p>
+            <p className="text-gray-400 text-center pt-4">No saved meals yet. Add one you make often.</p>
           ) : (
             customMeals.map(meal => (
               <div key={meal.id} className="bg-gray-700 p-3 rounded-lg shadow-md">
@@ -164,6 +166,7 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                     <input
                       type="text"
                       name="name"
+                      aria-label="Edit meal name"
                       placeholder="Meal Name"
                       value={editMealData.name}
                       onChange={handleEditChange}
@@ -176,7 +179,8 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                           key={macro}
                           type="number"
                           name={macro}
-                          placeholder={macroPlaceholders[macro]}
+                          aria-label={macroPlaceholders[macro]}
+                  placeholder={macroPlaceholders[macro]}
                           value={editMealData[macro]}
                           onChange={handleEditChange}
                           min="0"
@@ -218,22 +222,22 @@ export const CustomMealModal = ({ isOpen, onClose, customMeals, onSaveMeal, onAd
                           e.stopPropagation();
                           onAddMeal(meal);
                         }}
-                        className="text-green-500 hover:text-green-400 p-1 rounded-full hover:bg-gray-600 transition-colors"
-                        title="Add to Log"
+                        className="icon-button"
+                        title="Add to log" aria-label={`Add ${meal.name} to log`}
                       >
                         <PlusCircle size={20} />
                       </button>
                       <button
                         onClick={() => handleEditClick(meal)}
-                        className="text-blue-500 hover:text-blue-400 p-1 rounded-full hover:bg-gray-600 transition-colors"
-                        title="Edit Meal"
+                        className="icon-button"
+                        title="Edit meal" aria-label={`Edit saved meal ${meal.name}`}
                       >
                         <Edit2 size={20} />
                       </button>
                       <button
                         onClick={() => onDeleteMeal(meal)}
-                        className="text-red-500 hover:text-red-400 p-1 rounded-full hover:bg-gray-600 transition-colors"
-                        title="Delete Template"
+                        className="icon-button"
+                        title="Delete meal" aria-label={`Delete saved meal ${meal.name}`}
                       >
                         <Trash2 size={20} />
                       </button>

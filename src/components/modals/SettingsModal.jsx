@@ -25,7 +25,7 @@ const ColorPicker = ({ value, onChange, label }) => {
 
   return (
     <div className="space-y-2" ref={pickerRef}>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div 
           className="w-16 h-10 rounded cursor-pointer border-2 border-gray-600"
           style={{ backgroundColor: value }}
@@ -103,19 +103,19 @@ export const SettingsModal = ({
     if (activeTab === 'appearance') {
       defaults = {
         ...formData,
-        primaryColor: '#22c55e',
-        secondaryColor: '#3b82f6',
-        backgroundColor: '#111827',
-        windowColor: '#1f2937',
+        primaryColor: '#24634d',
+        secondaryColor: '#496f8b',
+        backgroundColor: '#171c19',
+        windowColor: '#202722',
       };
     } else if (activeTab === 'display') {
       defaults = {
         ...formData,
-        nameGradientStart: '#ec4899',
-        nameGradientMiddle: '#a855f7',
-        nameGradientEnd: '#06b6d4',
-        nameGlow: '#a855f7',
-        nameGlowIntensity: 40,
+        nameGradientStart: '#24634d',
+        nameGradientMiddle: '#24634d',
+        nameGradientEnd: '#24634d',
+        nameGlow: '#24634d',
+        nameGlowIntensity: 0,
       };
     } else {
       // Profile tab - no color settings to reset
@@ -136,7 +136,7 @@ export const SettingsModal = ({
     <Modal isOpen={isOpen} title="Settings" onClose={onClose} allowClickOutside={allowClickOutside} titleColor={primaryColor}>
       <div className="text-gray-200">
         {/* Tabs */}
-        <div className="flex gap-2 mb-4 border-b border-gray-700">
+        <div className="settings-tabs flex gap-2 mb-4 border-b border-gray-700">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (

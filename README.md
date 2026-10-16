@@ -16,7 +16,7 @@ A modern macro and calorie tracking application with AI-powered food entry and F
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
+- Node.js 22.12+ (Node.js 24 recommended)
 - npm or yarn
 
 ### Installation
@@ -61,3 +61,37 @@ src/
 - Tailwind CSS
 - Lucide React Icons
 - Google Gemini API
+
+## Preview the design locally
+
+Use a recent Node version (Vite 7 requires Node 20.19+ or 22.12+; Node 24 works).
+From a checkout containing the design changes:
+
+```bash
+npm ci
+npm run dev
+```
+
+Open this address in the browser on the **same computer** running the command:
+
+```text
+http://localhost:5173/?demo
+```
+
+The development-only demo uses sample data in memory. Try adding and editing
+entries, saving meal templates, adjusting goals, undo/redo, and the light/dark
+switch. Refresh restores the samples. It does not import Firebase configuration,
+send emails, call AI, access your camera, or update real accounts. The banner
+identifies demo mode; it is excluded from production builds.
+
+For the real app, omit `?demo` and configure `.env.local` using `.env.example`.
+Use a separate Firebase test project or disposable test account: running locally
+still accesses whichever Firebase project you configure. Plain Vite serves the
+frontend; the real `/api` endpoints require a compatible serverless development
+runtime such as Vercel CLI (`vercel dev`).
+
+A server running in a cloud workspace is not your computer's localhost. For
+browser testing without local tools, push a separate branch and use its Vercel
+**Preview** deployment, with Preview-scoped environment variables. Keep the branch
+unmerged until reviewed. Production deploys from your configured production
+branch (normally `main`); confirm this under Vercel project settings.

@@ -15,11 +15,7 @@ import {
   getDoc,
   runTransaction
 } from "firebase/firestore";
-import { 
-  Loader2, Trash2, Sparkles, Brain, X, Flame, Beef, Target, 
-  Carrot, Milk, Pencil, LogIn, LogOut, BookmarkPlus, CheckCircle, AlertCircle, 
-  RotateCcw, PlusSquare, Moon, Sun, Clock, History, Camera, Undo2, Redo2, Settings, Heart
-} from 'lucide-react';
+import { X, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Firebase configuration
 import { auth, db, appId } from './config/firebase';
@@ -30,7 +26,7 @@ import { initializeSettings } from './utils/settings';
 
 // Components
 import { Modal } from './components/ui/Modal';
-import { ProgressBar } from './components/ui/ProgressBar';
+import Dashboard from './components/Dashboard';
 import { AuthModal } from './components/modals/AuthModal';
 import { EditLogModal } from './components/modals/EditLogModal';
 import { CustomMealModal } from './components/modals/CustomMealModal';
@@ -41,7 +37,6 @@ import { ScannerModal } from './components/modals/ScannerModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { SupportModal } from './components/modals/SupportModal';
 import { FireAnimation } from './components/ui/FireAnimation';
-import { AngryEyesIcon } from './components/ui/AngryEyesIcon';
 
 // Helper function to get local date string (YYYY-MM-DD)
 const getLocalDateString = () => {
@@ -103,36 +98,36 @@ const App = () => {
   // Theme state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved ? saved === 'dark' : true; // Default to dark
+    return saved ? saved === 'dark' : false;
   });
   
   // Color customization state
   const [primaryColor, setPrimaryColor] = useState(() => {
-    return localStorage.getItem('primaryColor') || '#22c55e';
+    return localStorage.getItem('primaryColor') || '#24634d';
   });
   const [secondaryColor, setSecondaryColor] = useState(() => {
-    return localStorage.getItem('secondaryColor') || '#3b82f6';
+    return localStorage.getItem('secondaryColor') || '#496f8b';
   });
   const [nameGradientStart, setNameGradientStart] = useState(() => {
-    return localStorage.getItem('nameGradientStart') || '#ec4899';
+    return localStorage.getItem('nameGradientStart') || '#24634d';
   });
   const [nameGradientMiddle, setNameGradientMiddle] = useState(() => {
-    return localStorage.getItem('nameGradientMiddle') || '#a855f7';
+    return localStorage.getItem('nameGradientMiddle') || '#24634d';
   });
   const [nameGradientEnd, setNameGradientEnd] = useState(() => {
-    return localStorage.getItem('nameGradientEnd') || '#06b6d4';
+    return localStorage.getItem('nameGradientEnd') || '#24634d';
   });
   const [nameGlow, setNameGlow] = useState(() => {
-    return localStorage.getItem('nameGlow') || '#a855f7';
+    return localStorage.getItem('nameGlow') || '#24634d';
   });
   const [nameGlowIntensity, setNameGlowIntensity] = useState(() => {
-    return parseInt(localStorage.getItem('nameGlowIntensity')) || 40;
+    return parseInt(localStorage.getItem('nameGlowIntensity') ?? '0', 10) || 0;
   });
   const [backgroundColor, setBackgroundColor] = useState(() => {
-    return localStorage.getItem('backgroundColor') || '#111827';
+    return localStorage.getItem('backgroundColor') || '#171c19';
   });
   const [windowColor, setWindowColor] = useState(() => {
-    return localStorage.getItem('windowColor') || '#1f2937';
+    return localStorage.getItem('windowColor') || '#202722';
   });
   
   // Recent foods tracking (last 10 unique entries)
@@ -370,15 +365,15 @@ const App = () => {
         setCustomMeals([]);
         
         // Reset color settings to defaults
-        setPrimaryColor('#22c55e');
-        setSecondaryColor('#3b82f6');
-        setNameGradientStart('#ec4899');
-        setNameGradientMiddle('#a855f7');
-        setNameGradientEnd('#06b6d4');
-        setNameGlow('#a855f7');
-        setNameGlowIntensity(40);
-        setBackgroundColor('#111827');
-        setWindowColor('#1f2937');
+        setPrimaryColor('#24634d');
+        setSecondaryColor('#496f8b');
+        setNameGradientStart('#24634d');
+        setNameGradientMiddle('#24634d');
+        setNameGradientEnd('#24634d');
+        setNameGlow('#24634d');
+        setNameGlowIntensity(0);
+        setBackgroundColor('#171c19');
+        setWindowColor('#202722');
         
         showError("Successfully signed out. You are now using a temporary, anonymous account.");
       } catch (error) {
@@ -1119,10 +1114,10 @@ const App = () => {
 
   // --- Render ---
   return (
-    <div className="flex justify-center items-start min-h-screen p-4 font-sans transition-colors duration-300" style={{ backgroundColor: isDarkMode ? backgroundColor : '#f3f4f6', color: isDarkMode ? 'white' : '#111827' }}>
+    <div className="app-shell" style={{ '--accent': primaryColor, '--secondary-accent': secondaryColor, ...(isDarkMode ? { '--page-bg': backgroundColor, '--surface': windowColor } : {}) }}>
       {showFireAnimation && <FireAnimation targetRef={historyButtonRef} />}
       
-      <div className="w-full max-w-xl mx-auto">
+      <div className="app-container">
         
         {/* Error/Notification Modal */}
         {isErrorModalOpen && (
@@ -1132,7 +1127,7 @@ const App = () => {
             onClick={() => setIsErrorModalOpen(false)}
           >
             <div 
-              className="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-lg w-full border border-gray-700"
+              className="app-dialog" role="dialog" aria-modal="true" aria-label="Notification"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-4">
@@ -1359,452 +1354,26 @@ const App = () => {
           </Modal>
         )}
 
-        {/* --- Header & Auth --- */}
-        <header className="text-center mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-left">
-              <h1 className="text-4xl font-extrabold" style={{ color: primaryColor }}>MacroGG</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              {currentStreak >= 3 && (
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border ${
-                  isDarkMode ? 'bg-orange-900/30 border-orange-700' : 'bg-orange-100 border-orange-300'
-                }`}>
-                  <Flame size={20} className="text-orange-500" fill="currentColor" />
-                  <span className={`text-sm font-bold ${
-                    isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                  }`}>
-                    {currentStreak} Day Streak!
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={() => setIsSupportModalOpen(true)}
-                className={`p-2 rounded-lg transition-all hover:scale-110 ${
-                  isDarkMode 
-                    ? 'bg-gray-800 hover:bg-gray-700' 
-                    : 'bg-white hover:bg-gray-100 border border-gray-300'
-                }`}
-                title="Support Development ❤️"
-                style={{ color: '#ff5e5b' }}
-              >
-                <Heart size={20} fill="currentColor" />
-              </button>
-              <button
-                onClick={() => setIsSettingsOpen(true)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isDarkMode 
-                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-400' 
-                    : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-300'
-                }`}
-                title="Settings"
-              >
-                <Settings size={20} />
-              </button>
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-colors ${
-                  isDarkMode 
-                    ? 'bg-gray-800 hover:bg-gray-700 text-yellow-400' 
-                    : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-300'
-                }`}
-                title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-            </div>
-          </div>
-          <div className="flex justify-between items-center p-3 rounded-xl shadow-inner border" style={{ backgroundColor: isDarkMode ? windowColor : 'white', borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
-            {isEditingName ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  className={`px-2 py-1 text-sm rounded border w-40 ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                  placeholder="Enter your name"
-                  autoFocus
-                />
-                <button
-                  onClick={handleUpdateUsername}
-                  className="hover:opacity-80 text-sm font-semibold"
-                  style={{ color: primaryColor }}
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditingName(false);
-                    setNameInput(username);
-                  }}
-                  className="text-gray-400 hover:text-gray-300 text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Welcome,{' '}
-                    <span 
-                      className="wave-text font-black text-lg tracking-wide" 
-                      style={{ 
-                        textShadow: `0 0 20px ${nameGlow}${Math.round(nameGlowIntensity * 2.55).toString(16).padStart(2, '0')}`
-                      }}
-                    >
-                      {(() => {
-                        const text = currentUser && currentUser.email 
-                          ? (username || currentUser.email.split('@')[0])
-                          : (userId ? userId.substring(0, 8) + '...' : 'Loading...');
-                        
-                        return text.split('').map((char, i) => {
-                          // Calculate color position for this letter
-                          const position = i / (text.length - 1 || 1);
-                          
-                          // Interpolate between gradient colors
-                          const getColorAtPosition = (pos) => {
-                            if (pos <= 0.5) {
-                              // Interpolate between start and middle
-                              const localPos = pos * 2;
-                              return interpolateColor(nameGradientStart, nameGradientMiddle, localPos);
-                            } else {
-                              // Interpolate between middle and end
-                              const localPos = (pos - 0.5) * 2;
-                              return interpolateColor(nameGradientMiddle, nameGradientEnd, localPos);
-                            }
-                          };
-                          
-                          const interpolateColor = (color1, color2, factor) => {
-                            const c1 = parseInt(color1.slice(1), 16);
-                            const c2 = parseInt(color2.slice(1), 16);
-                            
-                            const r1 = (c1 >> 16) & 0xff;
-                            const g1 = (c1 >> 8) & 0xff;
-                            const b1 = c1 & 0xff;
-                            
-                            const r2 = (c2 >> 16) & 0xff;
-                            const g2 = (c2 >> 8) & 0xff;
-                            const b2 = c2 & 0xff;
-                            
-                            const r = Math.round(r1 + (r2 - r1) * factor);
-                            const g = Math.round(g1 + (g2 - g1) * factor);
-                            const b = Math.round(b1 + (b2 - b1) * factor);
-                            
-                            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-                          };
-                          
-                          return (
-                            <span key={i} style={{ color: getColorAtPosition(position) }}>
-                              {char}
-                            </span>
-                          );
-                        });
-                      })()}
-                    </span>
-                    !
-                  </p>
-                </div>
-              </>
-            )}
-            
-            {currentUser && currentUser.email ? (
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm font-semibold transition-colors"
-              >
-                <LogOut size={16} /> Sign Out
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="flex items-center gap-1 hover:opacity-80 text-sm font-semibold transition-colors"
-                style={{ color: secondaryColor }}
-              >
-                <LogIn size={16} /> Sign In/Up
-              </button>
-            )}
-          </div>
-        </header>
-        
-        {/* Only render content if Auth is ready */}
-        {!isAuthReady ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 size={32} className="animate-spin" style={{ color: primaryColor }} />
-            <p className={`ml-4 text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading User Data...</p>
-          </div>
-        ) : (
-          <>
-            <section className="p-6 rounded-xl shadow-2xl mb-8 border" style={{ backgroundColor: isDarkMode ? windowColor : 'white', borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
-              <h2 className="text-2xl font-semibold mb-4 flex items-center justify-between" style={{ color: primaryColor }}>
-                Daily Progress
-                <div className="flex gap-2">
-                  <button
-                    ref={historyButtonRef}
-                    onClick={handleViewHistory}
-                    className="text-sm hover:opacity-80 transition-colors flex items-center gap-1"
-                    style={{ color: secondaryColor }}
-                    aria-label="View History"
-                    title="View past logs"
-                  >
-                    <History size={16} /> History
-                  </button>
-                  <button
-                    onClick={handleResetProgress}
-                    className="text-sm hover:opacity-80 transition-colors flex items-center gap-1"
-                    style={{ color: secondaryColor }}
-                    aria-label="Reset Progress"
-                    title="Reset today's progress"
-                  >
-                    <RotateCcw size={16} /> Reset
-                  </button>
-                  <button
-                    onClick={() => setIsGoalModalOpen(true)}
-                    className="text-sm hover:opacity-80 transition-colors flex items-center gap-1"
-                    style={{ color: secondaryColor }}
-                    aria-label="Set Daily Goals"
-                  >
-                    <Target size={16} /> Set Goals
-                  </button>
-                </div>
-              </h2>
-              <ProgressBar current={totals.calories} goal={dailyGoal} label="Calories (kcal)" color={primaryColor} isDarkMode={isDarkMode} />
-              <ProgressBar current={totals.protein} goal={proteinGoal} label="Protein (g)" color={secondaryColor} isDarkMode={isDarkMode} />
-              
-              {isTrackingCarbs && (
-                <ProgressBar current={totals.carbs} goal={carbGoal} label="Carbs (g)" colorClass="bg-yellow-500" isDarkMode={isDarkMode} />
-              )}
-              {isTrackingFat && (
-                <ProgressBar current={totals.fat} goal={fatGoal} label="Fat (g)" colorClass="bg-red-500" isDarkMode={isDarkMode} />
-              )}
-            </section>
-
-            {/* --- AI Input Section --- */}
-            <section className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="ai-input" className="text-lg font-semibold flex items-center gap-2" style={{ color: primaryColor }}>
-                  <Brain size={20} style={{ color: primaryColor }} />
-                  AI Food Entry
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsScannerOpen(true)}
-                    className="text-sm transition-colors flex items-center gap-1"
-                    style={{ color: secondaryColor }}
-                    title="Scan barcode"
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                  >
-                    <Camera size={16} /> Scan
-                  </button>
-                  <button
-                    onClick={() => setIsManualEntryOpen(true)}
-                    className="text-sm transition-colors flex items-center gap-1"
-                    style={{ color: secondaryColor }}
-                    title="Add manual entry"
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                  >
-                    <PlusSquare size={16} /> Manual
-                  </button>
-                </div>
-              </div>
-              <form onSubmit={handleAiAdd} className="space-y-4">
-                <div className="flex gap-3">
-                  <input
-                    id="ai-input"
-                    type="text"
-                    value={aiInput}
-                    onChange={(e) => setAiInput(e.target.value)}
-                    className="flex-1 p-3 rounded-lg border outline-none placeholder-gray-400"
-                    style={{
-                      backgroundColor: isDarkMode ? windowColor : 'white',
-                      borderColor: isDarkMode ? '#4b5563' : '#d1d5db',
-                      color: isDarkMode ? 'white' : '#111827'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = primaryColor}
-                    onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#4b5563' : '#d1d5db'}
-                    placeholder="e.g., 'I had 3 scrambled eggs and 1 slice of whole wheat toast'"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="submit"
-                    className="flex justify-center items-center gap-2 font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed text-white"
-                    style={{ backgroundColor: primaryColor }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 size={20} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={20} />
-                    )}
-                    {isLoading ? 'Analyzing...' : 'Analyze & Add'}
-                  </button>
-                </div>
-              </form>
-            </section>
-            
-            {/* --- Recent Foods Quick Add --- */}
-            {recentFoods.length > 0 && (
-              <section className="mb-6 p-4 rounded-xl border" style={{ backgroundColor: isDarkMode ? windowColor : 'white', borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: primaryColor }}>
-                  <Clock size={16} style={{ color: primaryColor }} />
-                  Recent Foods - Quick Add
-                </h3>
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {recentFoods.map((food, index) => (
-                    <button
-                      key={`${food.food}-${index}`}
-                      onClick={() => handleQuickAdd(food)}
-                      className={`flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
-                        isDarkMode 
-                          ? 'bg-gray-700 hover:bg-gray-600 text-gray-200 border border-gray-600' 
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300'
-                      }`}
-                      title={`${food.calories}kcal | P:${food.protein}g C:${food.carbs}g F:${food.fat}g`}
-                    >
-                      <div className="flex items-center gap-1">
-                        <PlusSquare size={14} className="text-green-400" />
-                        <span className="truncate max-w-[120px]">{food.food}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-            
-            {/* --- Daily Log List --- */}
-            <section className="p-6 rounded-xl shadow-2xl border" style={{ backgroundColor: isDarkMode ? windowColor : 'white', borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
-              <h2 className="text-2xl font-semibold mb-4 flex items-center justify-between" style={{ color: primaryColor }}>
-                Food Log
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleUndoDelete}
-                    disabled={undoStack.length === 0}
-                    className="text-sm transition-colors flex items-center gap-1"
-                    style={{ color: undoStack.length === 0 ? '#6b7280' : (isDarkMode ? 'white' : '#111827') }}
-                    onMouseEnter={(e) => undoStack.length > 0 && (e.currentTarget.style.opacity = '0.8')}
-                    onMouseLeave={(e) => undoStack.length > 0 && (e.currentTarget.style.opacity = '1')}
-                    title={undoStack.length > 0 ? `Undo (${undoStack.length} available)` : 'No actions to undo'}
-                  >
-                    <Undo2 size={16} /> Undo
-                    {undoStack.length > 0 && (
-                      <span className="text-xs">({undoStack.length})</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleRedoDelete}
-                    disabled={redoStack.length === 0}
-                    className="text-sm transition-colors flex items-center gap-1"
-                    style={{ color: redoStack.length === 0 ? '#6b7280' : (isDarkMode ? 'white' : '#111827') }}
-                    onMouseEnter={(e) => redoStack.length > 0 && (e.currentTarget.style.opacity = '0.8')}
-                    onMouseLeave={(e) => redoStack.length > 0 && (e.currentTarget.style.opacity = '1')}
-                    title={redoStack.length > 0 ? `Redo (${redoStack.length} available)` : 'No actions to redo'}
-                  >
-                    <Redo2 size={16} /> Redo
-                    {redoStack.length > 0 && (
-                      <span className="text-xs">({redoStack.length})</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setIsMealModalOpen(true)}
-                    className="text-sm transition-colors flex items-center gap-1"
-                    style={{ color: secondaryColor }}
-                    aria-label="Manage Custom Meals"
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                  >
-                    <Carrot size={16} /> Custom Meals ({customMeals.length})
-                  </button>
-                </div>
-              </h2>
-              <div className="h-80 overflow-y-auto space-y-3 pr-2">
-                {foodLog.length === 0 ? (
-                  <div className={`flex flex-col items-center justify-center h-full text-center ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
-                    <Milk size={32} className="mb-2"/>
-                    <p>No entries logged today.</p>
-                    <p className="text-sm">Use AI or Custom Meals to start tracking!</p>
-                  </div>
-                ) : (
-                  foodLog.slice().reverse().map(item => (
-                    <div 
-                      key={item.id} 
-                      className={`flex items-center justify-between p-3 rounded-lg shadow-md transition-colors ${
-                        isDarkMode 
-                          ? 'bg-gray-700 hover:bg-gray-600' 
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-base font-medium truncate ${
-                          isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                        }`}>{item.food}</p>
-                        <div className={`grid grid-cols-2 md:grid-cols-4 gap-x-4 text-xs mt-1 font-mono ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                        }`}>
-                          <span className="flex items-center gap-1 text-green-400">
-                            <Flame size={12} /> {item.calories} kcal
-                          </span>
-                          <span className="flex items-center gap-1 text-blue-400">
-                            <Beef size={12} /> P: {item.protein}g
-                          </span>
-                          <span className="flex items-center gap-1 text-yellow-400">
-                            C: {item.carbs}g
-                          </span>
-                          <span className="flex items-center gap-1 text-red-400">
-                            F: {item.fat}g
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4 flex-shrink-0">
-                        <button 
-                          onClick={() => handleSaveLogEntryAsMeal(item)}
-                          className={`p-2 rounded-full transition-colors ${
-                            isDarkMode 
-                              ? 'text-yellow-400 hover:text-yellow-300 hover:bg-gray-500' 
-                              : 'text-yellow-600 hover:text-yellow-700 hover:bg-gray-200'
-                          }`}
-                          aria-label={`Save ${item.food} as custom meal`}
-                          title="Save as custom meal"
-                        >
-                          <BookmarkPlus size={18} />
-                        </button>
-                        <button 
-                          onClick={() => { setEditingItem(item); setIsEditModalOpen(true); }}
-                          className={`p-2 rounded-full transition-colors ${
-                            isDarkMode 
-                              ? 'text-white hover:text-blue-400 hover:bg-gray-500' 
-                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-200'
-                          }`}
-                          aria-label={`Edit ${item.food}`}
-                        >
-                          <Pencil size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteEntry(item)}
-                          className={`p-2 rounded-full transition-colors ${
-                            isDarkMode 
-                              ? 'text-red-500 hover:text-red-400 hover:bg-gray-500' 
-                              : 'text-red-600 hover:text-red-700 hover:bg-gray-200'
-                          }`}
-                          aria-label={`Delete ${item.food}`}
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-          </>
-        )}
+        <Dashboard
+          historyButtonRef={historyButtonRef}
+          theme={{ isDarkMode }}
+          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, recentFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
+          account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
+          actions={{
+            onSupport: () => setIsSupportModalOpen(true), onToggleTheme: toggleTheme,
+            onSettings: () => setIsSettingsOpen(true), onSignOut: handleSignOut,
+            onSignIn: () => setIsAuthModalOpen(true), onNameInput: setNameInput,
+            onSaveName: handleUpdateUsername, onCancelName: () => setIsEditingName(false),
+            onGoals: () => setIsGoalModalOpen(true), onHistory: handleViewHistory,
+            onReset: handleResetProgress, onMeals: () => setIsMealModalOpen(true),
+            onAiAdd: handleAiAdd, onAiInput: setAiInput,
+            onManual: () => setIsManualEntryOpen(true), onScanner: () => setIsScannerOpen(true),
+            onQuickAdd: handleQuickAdd, onUndo: handleUndoDelete, onRedo: handleRedoDelete,
+            onSaveMeal: handleSaveLogEntryAsMeal,
+            onEdit: item => { setEditingItem(item); setIsEditModalOpen(true); },
+            onDelete: handleDeleteEntry,
+          }}
+        />
       </div>
     </div>
   );
