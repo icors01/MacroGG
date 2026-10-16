@@ -573,22 +573,23 @@ const App = () => {
     }
   };
 
-  const addEntryToLog = useCallback(async (entry) => {
+  const addEntryToLog = useCallback(async (entry, { preservePrecision = false } = {}) => {
     if (!dbInstance || !userId) {
       showError("Database not ready.");
-      return;
+      return false;
     }
     
     const today = getLocalDateString();
     
+    const precision = preservePrecision ? 10 : 1;
     const newEntry = {
       id: crypto.randomUUID(),
       date: today,
       food: entry.food || "Unknown Entry",
-      calories: Math.round(entry.calories || 0),
-      protein: Math.round(entry.protein || 0),
-      carbs: Math.round(entry.carbs || 0), 
-      fat: Math.round(entry.fat || 0),
+      calories: Math.round((entry.calories || 0) * precision) / precision,
+      protein: Math.round((entry.protein || 0) * precision) / precision,
+      carbs: Math.round((entry.carbs || 0) * precision) / precision,
+      fat: Math.round((entry.fat || 0) * precision) / precision,
     };
 
     try {
@@ -611,9 +612,11 @@ const App = () => {
       // Add to undo stack as an addition and clear redo stack
       setUndoStack(prev => [...prev, { entry: newEntry, date: today, action: 'add' }]);
       setRedoStack([]);
+      return true;
     } catch (error) {
       console.error("Error adding log entry: ", error);
       showError("Error adding entry: " + error.message);
+      return false;
     }
   }, [dbInstance, userId]);
 
@@ -1097,9 +1100,8 @@ const App = () => {
   }, [foodLog, dbInstance, userId, appId]);
 
   // --- Scanner Product Handler ---
-  const handleScannerProduct = (productEntry) => {
-    addEntryToLog(productEntry);
-    showError(`${productEntry.food} added to log!`, "success");
+  const handleScannerProduct = async (productEntry) => {
+    return await addEntryToLog(productEntry, { preservePrecision: true });
   };
 
   // --- Render ---
