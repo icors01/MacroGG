@@ -42,7 +42,7 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
 
   return (
     <Modal isOpen={isOpen} title={`Edit Entry: ${item.food}`} onClose={onClose} allowClickOutside={allowClickOutside} titleColor="#3b82f6">
-      <form onSubmit={handleSubmit} className="space-y-4 text-gray-200">
+      <form onSubmit={handleSubmit} className="edit-entry-form space-y-4 text-gray-200">
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="edit-food">Description</label>
           <input
@@ -52,7 +52,7 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
             value={formData.food}
             onChange={handleChange}
             required
-            className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+            className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -69,7 +69,7 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
                 onChange={handleChange}
                 min="0"
                 required
-                className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-green-500 focus:border-green-500"
+                className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
               />
             </div>
           ))}
