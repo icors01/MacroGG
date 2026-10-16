@@ -1827,3 +1827,23 @@ h2 {
     bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
+
+.dialog-feedback {
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+.dialog-feedback.is-fading {
+  opacity: 0;
+}
+.meal-editor-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-top: 10px;
+  background: var(--surface-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-feedback {
+    transition: none;
+  }
+}

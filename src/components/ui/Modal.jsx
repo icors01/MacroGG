@@ -113,7 +113,7 @@ export const Modal = ({
         {showFeedbackError && feedback?.inline?.dialogId === titleId && (
           <p
             role={feedback.inline.type === "error" ? "alert" : "status"}
-            className={`dialog-feedback ${feedback.inline.type === "error" ? "dialog-danger" : "dialog-accent"}`}
+            className={`dialog-feedback ${feedback.inline.fading ? "is-fading" : ""} ${feedback.inline.type === "error" ? "dialog-danger" : "dialog-accent"}`}
           >
             {feedback.inline.message}
           </p>

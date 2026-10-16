@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "../ui/Modal";
 import { PlusCircle, Trash2, Edit2, Pin } from "lucide-react";
 
@@ -16,6 +16,7 @@ export const CustomMealModal = ({
   secondaryColor = "#3b82f6",
   primaryColor = "#22c55e",
 }) => {
+  const content = useRef(null);
   const [newMealData, setNewMealData] = useState({
     name: "",
     calories: "",
@@ -27,6 +28,12 @@ export const CustomMealModal = ({
   const [isCreating, setIsCreating] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
   const [editMealData, setEditMealData] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen || (!editingMealId && !isCreating)) return;
+    content.current?.closest(".app-dialog")?.scrollTo({ top: 0 });
+    content.current?.querySelector("input")?.focus({ preventScroll: true });
+  }, [isOpen, editingMealId, isCreating]);
 
   const handleNewMealChange = (e) => {
     const { name, value } = e.target;
@@ -71,6 +78,7 @@ export const CustomMealModal = ({
   };
 
   const handleEditClick = (meal) => {
+    setIsCreating(false);
     setEditingMealId(meal.id);
     setEditMealData({
       name: meal.name,
@@ -129,23 +137,31 @@ export const CustomMealModal = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Saved meals"
+      title={
+        editingMealId
+          ? "Edit saved meal"
+          : isCreating
+            ? "New saved meal"
+            : "Saved meals"
+      }
       onClose={() => {
         if (saving) return;
         onClose();
         setIsCreating(false);
+        setEditingMealId(null);
+        setEditMealData(null);
       }}
       allowClickOutside={allowClickOutside}
       titleColor={secondaryColor}
     >
-      <div className="space-y-4">
-        {onTogglePin && (
+      <div className="space-y-4" ref={content}>
+        {onTogglePin && !editingMealId && !isCreating && (
           <p className="dialog-muted">
             Pin up to 3 meals for quick access on your journal.{" "}
             {pinnedMealIds.length}/3 pinned.
           </p>
         )}
-        {!isCreating && (
+        {!isCreating && !editingMealId && (
           <button
             type="button"
             onClick={() => setIsCreating(true)}
@@ -207,150 +223,156 @@ export const CustomMealModal = ({
           </form>
         )}
 
-        <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-          {customMeals.length === 0 ? (
-            <p className="text-gray-400 text-center pt-4">
-              No saved meals yet. Add one you make often.
-            </p>
-          ) : (
-            customMeals.map((meal) => (
-              <div
-                key={meal.id}
-                className="bg-gray-700 p-3 rounded-lg shadow-md"
-              >
-                {editingMealId === meal.id ? (
-                  <form
-                    onSubmit={(e) => handleEditSubmit(e, meal.id)}
-                    className="space-y-3"
+        {!isCreating && (
+          <div className="saved-meals-list space-y-2">
+            {customMeals.length === 0 ? (
+              <p className="text-gray-400 text-center pt-4">
+                No saved meals yet. Add one you make often.
+              </p>
+            ) : (
+              customMeals
+                .filter((meal) => !editingMealId || meal.id === editingMealId)
+                .map((meal) => (
+                  <div
+                    key={meal.id}
+                    className="bg-gray-700 p-3 rounded-lg shadow-md"
                   >
-                    <input
-                      type="text"
-                      name="name"
-                      aria-label="Edit meal name"
-                      placeholder="Meal Name"
-                      value={editMealData.name}
-                      onChange={handleEditChange}
-                      required
-                      className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
-                    />
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {["calories", "protein", "carbs", "fat"].map((macro) => (
-                        <label key={macro} className="dialog-field">
-                          <span>{macroPlaceholders[macro]}</span>
-                          <input
-                            type="number"
-                            name={macro}
-                            aria-label={macroPlaceholders[macro]}
-                            placeholder="0"
-                            value={editMealData[macro]}
-                            onChange={handleEditChange}
-                            min="0"
-                            step={macro === "calories" ? "1" : "0.1"}
-                            className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
-                          />
-                        </label>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="button button-primary flex-1"
-                        style={{ backgroundColor: primaryColor }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.opacity = "0.8")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.opacity = "1")
-                        }
+                    {editingMealId === meal.id ? (
+                      <form
+                        onSubmit={(e) => handleEditSubmit(e, meal.id)}
+                        className="space-y-3"
                       >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCancelEdit}
-                        className="button button-secondary flex-1"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="saved-meal-row flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-100 truncate">
-                        {meal.name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {meal.calories}kcal | P:{meal.protein}g | C:{meal.carbs}
-                        g | F:{meal.fat}g
-                      </p>
-                    </div>
-                    <div className="saved-meal-actions flex gap-2">
-                      {onTogglePin && (
-                        <button
-                          type="button"
-                          onClick={() => onTogglePin(meal)}
-                          className={`icon-button ${pinnedMealIds.includes(meal.id) ? "meal-is-pinned" : ""}`}
-                          aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
-                          aria-pressed={pinnedMealIds.includes(meal.id)}
-                          disabled={
-                            isPinPending ||
-                            (!pinnedMealIds.includes(meal.id) &&
-                              pinnedMealIds.length >= 3)
-                          }
-                          title={
-                            pinnedMealIds.includes(meal.id)
-                              ? "Unpin meal"
-                              : pinnedMealIds.length >= 3
-                                ? "Unpin a meal to free a spot"
-                                : "Pin to journal"
-                          }
-                        >
-                          <Pin
-                            size={18}
-                            fill={
-                              pinnedMealIds.includes(meal.id)
-                                ? "currentColor"
-                                : "none"
+                        <input
+                          type="text"
+                          name="name"
+                          aria-label="Edit meal name"
+                          placeholder="Meal Name"
+                          value={editMealData.name}
+                          onChange={handleEditChange}
+                          required
+                          className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
+                        />
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {["calories", "protein", "carbs", "fat"].map(
+                            (macro) => (
+                              <label key={macro} className="dialog-field">
+                                <span>{macroPlaceholders[macro]}</span>
+                                <input
+                                  type="number"
+                                  name={macro}
+                                  aria-label={macroPlaceholders[macro]}
+                                  placeholder="0"
+                                  value={editMealData[macro]}
+                                  onChange={handleEditChange}
+                                  min="0"
+                                  step={macro === "calories" ? "1" : "0.1"}
+                                  className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
+                                />
+                              </label>
+                            ),
+                          )}
+                        </div>
+                        <div className="meal-editor-actions flex gap-2">
+                          <button
+                            type="submit"
+                            disabled={saving}
+                            className="button button-primary flex-1"
+                            style={{ backgroundColor: primaryColor }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.opacity = "0.8")
                             }
-                          />
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddMeal(meal);
-                        }}
-                        className="icon-button"
-                        title="Add to log"
-                        aria-label={`Add ${meal.name} to log`}
-                      >
-                        <PlusCircle size={20} />
-                      </button>
-                      <button
-                        onClick={() => handleEditClick(meal)}
-                        className="icon-button"
-                        title="Edit meal"
-                        aria-label={`Edit saved meal ${meal.name}`}
-                      >
-                        <Edit2 size={20} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteMeal(meal)}
-                        className="icon-button"
-                        title="Delete meal"
-                        aria-label={`Delete saved meal ${meal.name}`}
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.opacity = "1")
+                            }
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            className="button button-secondary flex-1"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="saved-meal-row flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-100 truncate">
+                            {meal.name}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {meal.calories}kcal | P:{meal.protein}g | C:
+                            {meal.carbs}g | F:{meal.fat}g
+                          </p>
+                        </div>
+                        <div className="saved-meal-actions flex gap-2">
+                          {onTogglePin && (
+                            <button
+                              type="button"
+                              onClick={() => onTogglePin(meal)}
+                              className={`icon-button ${pinnedMealIds.includes(meal.id) ? "meal-is-pinned" : ""}`}
+                              aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
+                              aria-pressed={pinnedMealIds.includes(meal.id)}
+                              disabled={
+                                isPinPending ||
+                                (!pinnedMealIds.includes(meal.id) &&
+                                  pinnedMealIds.length >= 3)
+                              }
+                              title={
+                                pinnedMealIds.includes(meal.id)
+                                  ? "Unpin meal"
+                                  : pinnedMealIds.length >= 3
+                                    ? "Unpin a meal to free a spot"
+                                    : "Pin to journal"
+                              }
+                            >
+                              <Pin
+                                size={18}
+                                fill={
+                                  pinnedMealIds.includes(meal.id)
+                                    ? "currentColor"
+                                    : "none"
+                                }
+                              />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddMeal(meal);
+                            }}
+                            className="icon-button"
+                            title="Add to log"
+                            aria-label={`Add ${meal.name} to log`}
+                          >
+                            <PlusCircle size={20} />
+                          </button>
+                          <button
+                            onClick={() => handleEditClick(meal)}
+                            className="icon-button"
+                            title="Edit meal"
+                            aria-label={`Edit saved meal ${meal.name}`}
+                          >
+                            <Edit2 size={20} />
+                          </button>
+                          <button
+                            onClick={() => onDeleteMeal(meal)}
+                            className="icon-button"
+                            title="Delete meal"
+                            aria-label={`Delete saved meal ${meal.name}`}
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+                ))
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   );

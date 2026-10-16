@@ -34,7 +34,7 @@ export function useFeedback() {
   const notify = useCallback((message, type = "error", options = {}) => {
     const dialogId = options.scope || activeDialog();
     if (dialogId && (type === "error" || options.inline)) {
-      setInline({ dialogId, message, type });
+      setInline({ id: ++sequence.current, dialogId, message, type });
       return;
     }
     setInline(null);
@@ -46,6 +46,23 @@ export function useFeedback() {
       duration: options.action ? 10000 : type === "error" ? 0 : 4000,
     });
   }, []);
+  useEffect(() => {
+    if (!inline || inline.type === "error") return;
+    const id = inline.id;
+    const fade = setTimeout(
+      () =>
+        setInline((old) => (old?.id === id ? { ...old, fading: true } : old)),
+      5000,
+    );
+    const remove = setTimeout(
+      () => setInline((old) => (old?.id === id ? null : old)),
+      5220,
+    );
+    return () => {
+      clearTimeout(fade);
+      clearTimeout(remove);
+    };
+  }, [inline?.id, inline?.type]);
   return { toast, notify, dismiss, clear, context: { inline, clearDialog } };
 }
 
