@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal } from "../ui/Modal";
-import { PlusCircle, Trash2, Edit2 } from "lucide-react";
+import { PlusCircle, Trash2, Edit2, Pin } from "lucide-react";
 
 export const CustomMealModal = ({
   isOpen,
@@ -9,6 +9,9 @@ export const CustomMealModal = ({
   onSaveMeal,
   onAddMeal,
   onDeleteMeal,
+  pinnedMealIds = [],
+  onTogglePin,
+  isPinPending = false,
   allowClickOutside = false,
   secondaryColor = "#3b82f6",
   primaryColor = "#22c55e",
@@ -121,6 +124,12 @@ export const CustomMealModal = ({
       titleColor={secondaryColor}
     >
       <div className="space-y-4">
+        {onTogglePin && (
+          <p className="dialog-muted">
+            Pin up to 3 meals for quick access on your journal.{" "}
+            {pinnedMealIds.length}/3 pinned.
+          </p>
+        )}
         {!isCreating && (
           <button
             type="button"
@@ -247,7 +256,7 @@ export const CustomMealModal = ({
                     </div>
                   </form>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div className="saved-meal-row flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-100 truncate">
                         {meal.name}
@@ -257,7 +266,37 @@ export const CustomMealModal = ({
                         g | F:{meal.fat}g
                       </p>
                     </div>
-                    <div className="flex gap-2 ml-4">
+                    <div className="saved-meal-actions flex gap-2">
+                      {onTogglePin && (
+                        <button
+                          type="button"
+                          onClick={() => onTogglePin(meal)}
+                          className={`icon-button ${pinnedMealIds.includes(meal.id) ? "meal-is-pinned" : ""}`}
+                          aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
+                          aria-pressed={pinnedMealIds.includes(meal.id)}
+                          disabled={
+                            isPinPending ||
+                            (!pinnedMealIds.includes(meal.id) &&
+                              pinnedMealIds.length >= 3)
+                          }
+                          title={
+                            pinnedMealIds.includes(meal.id)
+                              ? "Unpin meal"
+                              : pinnedMealIds.length >= 3
+                                ? "Unpin a meal to free a spot"
+                                : "Pin to journal"
+                          }
+                        >
+                          <Pin
+                            size={18}
+                            fill={
+                              pinnedMealIds.includes(meal.id)
+                                ? "currentColor"
+                                : "none"
+                            }
+                          />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

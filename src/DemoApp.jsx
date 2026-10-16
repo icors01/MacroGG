@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Dashboard from "./components/Dashboard";
+import { getPinnedMeals, togglePinnedMeal } from "./utils/pinnedMeals";
 import { rankUsualFoods } from "./utils/usualFoods";
 import { useJournalDate } from "./hooks/useJournalDate";
 import { Modal } from "./components/ui/Modal";
@@ -47,6 +48,12 @@ const sampleMeals = [
 export default function DemoApp() {
   const [foodLog, setFoodLog] = useState(sampleMeals);
   const journalDate = useJournalDate();
+  const [customMeals, setCustomMeals] = useState(sampleMeals.slice(0, 2));
+  const [pinnedMealIds, setPinnedMealIds] = useState([]);
+  const pinnedMeals = useMemo(
+    () => getPinnedMeals(customMeals, pinnedMealIds),
+    [customMeals, pinnedMealIds],
+  );
   const usualFoods = useMemo(() => {
     const history = Array.from({ length: 12 }, (_, index) => {
       const date = new Date(journalDate + "T00:00:00Z");
@@ -59,9 +66,9 @@ export default function DemoApp() {
     return rankUsualFoods(
       [...history, { date: journalDate, entries: foodLog }],
       journalDate,
+      pinnedMeals,
     );
-  }, [foodLog, journalDate]);
-  const [customMeals, setCustomMeals] = useState(sampleMeals.slice(0, 2));
+  }, [foodLog, journalDate, pinnedMeals]);
   const [aiInput, setAiInput] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [colorScheme, setColorScheme] = useState(DEFAULT_SCHEME_ID);
@@ -136,6 +143,7 @@ export default function DemoApp() {
             foodLog,
             customMeals,
             usualFoods,
+            pinnedMeals,
             isAuthReady: true,
             isLoading: false,
             aiInput,
@@ -145,6 +153,7 @@ export default function DemoApp() {
             redoCount: redo.length,
           }}
           actions={{
+            onPinnedAdd: addEntry,
             onAiInput: setAiInput,
             onAiAdd: (e) => {
               e.preventDefault();
@@ -242,6 +251,12 @@ export default function DemoApp() {
           isOpen={modal === "meals"}
           onClose={close}
           customMeals={customMeals}
+          pinnedMealIds={pinnedMeals.map((meal) => meal.id)}
+          onTogglePin={(meal) =>
+            setPinnedMealIds((ids) =>
+              togglePinnedMeal({ customMeals, pinnedMealIds: ids }, meal.id),
+            )
+          }
           onAddMeal={addEntry}
           onSaveMeal={(meal) =>
             setCustomMeals((meals) =>
@@ -250,11 +265,12 @@ export default function DemoApp() {
                 : [...meals, { ...meal, id: crypto.randomUUID() }],
             )
           }
-          onDeleteMeal={(meal) =>
+          onDeleteMeal={(meal) => {
+            setPinnedMealIds((ids) => ids.filter((id) => id !== meal.id));
             setCustomMeals((meals) =>
               meals.filter((saved) => saved.id !== meal.id),
-            )
-          }
+            );
+          }}
           {...colors}
         />
         <EditLogModal

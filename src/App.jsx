@@ -28,6 +28,8 @@ import { useUsualFoods } from './hooks/useUsualFoods';
 import { useJournalDate } from './hooks/useJournalDate';
 import { DEFAULT_SCHEME_ID, getThemeStyle, getSchemeSettings, isColorScheme } from './utils/colorSchemes';
 
+import { getPinnedMeals, togglePinnedMeal } from "./utils/pinnedMeals";
+
 // Components
 import { Modal } from './components/ui/Modal';
 import Dashboard from './components/Dashboard';
@@ -58,7 +60,14 @@ const App = () => {
   const [proteinGoal, setProteinGoal] = useState(150); 
   const [carbGoal, setCarbGoal] = useState(250);
   const [fatGoal, setFatGoal] = useState(70);
-  const [customMeals, setCustomMeals] = useState([]); 
+  const [mealSettings, setMealSettings] = useState({ owner: null, meals: [], ids: [] });
+  const [pinPending, setPinPending] = useState(null);
+  const customMeals = isAuthReady && mealSettings.owner === userId ? mealSettings.meals : [];
+  const pinnedMeals = useMemo(
+    () => isAuthReady && mealSettings.owner === userId
+      ? getPinnedMeals(mealSettings.meals, mealSettings.ids) : [],
+    [mealSettings, userId, isAuthReady]
+  );
 
   // New state for conditional macro tracking
   const [isTrackingCarbs, setIsTrackingCarbs] = useState(false);
@@ -138,7 +147,7 @@ const App = () => {
   });
   
   const journalDate = useJournalDate();
-  const usualFoods = useUsualFoods(dbInstance, appId, userId, isAuthReady, journalDate);
+  const usualFoods = useUsualFoods(dbInstance, appId, userId, isAuthReady, journalDate, pinnedMeals);
 
   // --- Utility Functions ---
 
@@ -337,7 +346,7 @@ const App = () => {
         setFoodLog([]);
         setDailyGoal(2000);
         setProteinGoal(150);
-        setCustomMeals([]);
+        setMealSettings({ owner: null, meals: [], ids: [] });
         
         // Reset color settings to defaults
         setColorScheme(DEFAULT_SCHEME_ID);
@@ -417,6 +426,7 @@ const App = () => {
   useEffect(() => {
     if (!isAuthReady || !userId || !dbInstance) return;
 
+    let active = true;
     const today = journalDate;
     
     // Listen to today's log document
@@ -441,13 +451,14 @@ const App = () => {
     });
 
     const unsubscribeSettings = onSnapshot(settingsRef, (docSnap) => {
+      if (!active) return;
       if (docSnap.exists()) {
         const data = docSnap.data();
         setDailyGoal(data.dailyGoal ?? 2000);
         setProteinGoal(data.proteinGoal ?? 150);
         setCarbGoal(data.carbGoal ?? 250);
         setFatGoal(data.fatGoal ?? 70);
-        setCustomMeals(data.customMeals || []);
+        setMealSettings({ owner: userId, meals: data.customMeals || [], ids: data.pinnedMealIds || [] });
         setIsTrackingCarbs(data.isTrackingCarbs || false);
         setIsTrackingFat(data.isTrackingFat || false);
         setUsername(data.username || '');
@@ -480,7 +491,7 @@ const App = () => {
         setProteinGoal(defaultSettings.proteinGoal);
         setCarbGoal(defaultSettings.carbGoal);
         setFatGoal(defaultSettings.fatGoal);
-        setCustomMeals(defaultSettings.customMeals);
+        setMealSettings({ owner: userId, meals: [], ids: [] });
         setIsTrackingCarbs(defaultSettings.isTrackingCarbs);
         setIsTrackingFat(defaultSettings.isTrackingFat);
         // Initialization runs in a transaction above. A missing local/cache
@@ -492,6 +503,7 @@ const App = () => {
     });
 
     return () => {
+      active = false;
       unsubscribeTodayLog();
       unsubscribeSettings();
     };
@@ -899,13 +911,39 @@ const App = () => {
     });
   };
 
+  const handleTogglePin = async (meal) => {
+    if (!dbInstance || !userId || pinPending) return;
+    const owner = userId;
+    setPinPending({ owner, id: meal.id });
+    try {
+      const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${owner}/settings/preferences`);
+      await runTransaction(dbInstance, async transaction => {
+        const snapshot = await transaction.get(settingsRef);
+        if (!snapshot.exists()) throw new Error("Your saved meals are not available yet.");
+        transaction.update(settingsRef, {
+          pinnedMealIds: togglePinnedMeal(snapshot.data(), meal.id),
+        });
+      });
+    } catch (error) {
+      if (auth.currentUser?.uid === owner) showError("Could not update pinned meals: " + error.message);
+    } finally {
+      setPinPending(null);
+    }
+  };
+
   const handleDeleteMealTemplate = async (mealToDelete) => {
     if (!dbInstance || !userId) return;
-
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
-      await updateDoc(settingsRef, {
-        customMeals: arrayRemove(mealToDelete)
+      await runTransaction(dbInstance, async transaction => {
+        const snapshot = await transaction.get(settingsRef);
+        if (!snapshot.exists()) return;
+        const settings = snapshot.data();
+        transaction.update(settingsRef, {
+          customMeals: (settings.customMeals || []).filter(meal => meal.id !== mealToDelete.id),
+          pinnedMealIds: getPinnedMeals(settings.customMeals, settings.pinnedMealIds)
+            .filter(meal => meal.id !== mealToDelete.id).map(meal => meal.id),
+        });
       });
     } catch (error) {
       console.error("Error deleting meal template: ", error);
@@ -1105,6 +1143,9 @@ const App = () => {
           isOpen={isMealModalOpen}
           onClose={() => setIsMealModalOpen(false)}
           customMeals={customMeals}
+          pinnedMealIds={pinnedMeals.map(meal => meal.id)}
+          onTogglePin={handleTogglePin}
+          isPinPending={pinPending?.owner === userId}
           onSaveMeal={handleSaveMealTemplate}
           onAddMeal={handleAddMealToLog}
           onDeleteMeal={handleDeleteMealTemplate}
@@ -1279,7 +1320,7 @@ const App = () => {
         <Dashboard
           historyButtonRef={historyButtonRef}
           theme={{ isDarkMode }}
-          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, usualFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
+          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, pinnedMeals, usualFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
           account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: activeColorScheme ? { color: 'var(--accent-text, var(--accent))' } : { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
           actions={{
             onSupport: () => setIsSupportModalOpen(true), onToggleTheme: toggleTheme,
@@ -1290,7 +1331,7 @@ const App = () => {
             onReset: () => setIsResetConfirmOpen(true), onMeals: () => setIsMealModalOpen(true),
             onAiAdd: handleAiAdd, onAiInput: setAiInput,
             onManual: () => setIsManualEntryOpen(true), onScanner: () => setIsScannerOpen(true),
-            onQuickAdd: handleQuickAdd, onUndo: handleUndoDelete, onRedo: handleRedoDelete,
+            onPinnedAdd: handleAddMealToLog, onQuickAdd: handleQuickAdd, onUndo: handleUndoDelete, onRedo: handleRedoDelete,
             onSaveMeal: handleSaveLogEntryAsMeal,
             onEdit: item => { setEditingItem(item); setIsEditModalOpen(true); },
             onDelete: handleDeleteEntry,

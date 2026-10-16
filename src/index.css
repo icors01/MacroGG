@@ -1647,3 +1647,48 @@ h2 {
   display: grid;
   gap: 6px;
 }
+
+.pinned-section .usuals-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pinned-section .usuals-heading h2 > svg {
+  color: var(--accent-text, var(--accent));
+}
+.pinned-section .usuals-heading .text-button {
+  font-size: 10px;
+  padding: 0;
+}
+.pinned-chip {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.pinned-chip > svg {
+  color: var(--accent-text, var(--accent));
+}
+.pinned-chip:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-text, var(--accent));
+}
+.pinned-section + .usuals-section {
+  padding-top: 0;
+}
+.saved-meal-row {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.saved-meal-row > .flex-1 {
+  min-width: 150px;
+}
+.saved-meal-actions {
+  margin-left: auto;
+}
+.app-dialog .meal-is-pinned {
+  color: var(--accent-text, var(--accent));
+  background: var(--accent-soft);
+}
+.saved-meal-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

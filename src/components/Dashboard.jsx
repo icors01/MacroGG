@@ -12,6 +12,7 @@ import {
   LogOut,
   Moon,
   Pencil,
+  Pin,
   Plus,
   Redo2,
   RotateCcw,
@@ -51,6 +52,7 @@ export default function Dashboard({
     foodLog,
     customMeals,
     usualFoods = [],
+    pinnedMeals = [],
     isAuthReady,
     isLoading,
     aiInput,
@@ -268,7 +270,7 @@ export default function Dashboard({
                 className="button button-secondary"
                 onClick={actions.onMeals}
               >
-                Saved meals{" "}
+                Manage saved meals{" "}
                 <span className="count-badge">{customMeals.length}</span>
                 <ChevronRight size={16} />
               </button>
@@ -316,7 +318,8 @@ export default function Dashboard({
                       e.shiftKey ||
                       e.nativeEvent.isComposing ||
                       e.keyCode === 229
-                    ) return;
+                    )
+                      return;
                     e.preventDefault();
                     if (!e.repeat && !isLoading && aiInput.trim()) {
                       e.currentTarget.form?.requestSubmit();
@@ -360,6 +363,44 @@ export default function Dashboard({
                 Estimates are a starting point. You can edit every entry.
               </p>
             </section>
+
+            {pinnedMeals.length > 0 && (
+              <section
+                className="usuals-section pinned-section"
+                aria-labelledby="pinned-title"
+              >
+                <div className="usuals-heading">
+                  <h2 id="pinned-title">
+                    <Pin size={13} /> Pinned
+                  </h2>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={actions.onMeals}
+                  >
+                    Manage
+                  </button>
+                </div>
+                <div className="usual-foods">
+                  {pinnedMeals.map((meal) => (
+                    <button
+                      type="button"
+                      key={meal.id}
+                      className="usual-chip pinned-chip"
+                      onClick={() => actions.onPinnedAdd(meal)}
+                      aria-label={`Add pinned ${meal.name}, ${number(meal.calories)} kcal`}
+                      title={`${meal.name} · ${number(meal.calories)} kcal`}
+                    >
+                      <span className="usual-chip-copy">
+                        <strong>{meal.name}</strong>
+                        <small>{number(meal.calories)} kcal</small>
+                      </span>
+                      <Plus size={15} />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {usualFoods.length > 0 && (
               <section

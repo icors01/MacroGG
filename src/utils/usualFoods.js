@@ -1,3 +1,5 @@
+import { foodSignature } from "./pinnedMeals.js";
+
 export const USUAL_FOODS_WINDOW_DAYS = 30;
 const DAY_MS = 86400000;
 const MACROS = ["calories", "protein", "carbs", "fat"];
@@ -31,9 +33,22 @@ export function getUsualFoodsWindow(today) {
 
 // This is derived from existing log documents, never a separate learning write.
 // Undo, deletion, and edits therefore update the recommendations automatically.
-export function rankUsualFoods(days, today) {
+export function rankUsualFoods(days, today, excludedFoods = []) {
   const { start } = getUsualFoodsWindow(today);
   const currentDay = dayNumber(today);
+  // The log currently rounds added macros, while saved templates can retain
+  // decimals. Hide both representations of a pinned portion.
+  const excluded = new Set(
+    excludedFoods.flatMap((food) => [
+      foodSignature(food),
+      foodSignature({
+        ...food,
+        ...Object.fromEntries(
+          MACROS.map((key) => [key, Math.round(Number(food[key] ?? 0))]),
+        ),
+      }),
+    ]),
+  );
   const groups = new Map();
   const seenIds = new Set();
   for (const day of days) {
@@ -85,7 +100,7 @@ export function rankUsualFoods(days, today) {
     [...groups.values()]
       // A usual is a food logged on at least two different days. One-off entries
       // do not create an extra section for new users.
-      .filter((group) => group.dates.size >= 2)
+      .filter((group) => group.dates.size >= 2 && !excluded.has(group.key))
       .map((group) => ({
         ...group.entry,
         key: group.key,

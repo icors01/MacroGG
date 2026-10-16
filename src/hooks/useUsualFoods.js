@@ -17,7 +17,14 @@ export function buildUsualFoodsQuery(db, appId, userId, today) {
   );
 }
 
-export function useUsualFoods(db, appId, userId, ready, today) {
+export function useUsualFoods(
+  db,
+  appId,
+  userId,
+  ready,
+  today,
+  excludedFoods = [],
+) {
   const [history, setHistory] = useState({
     owner: null,
     today: null,
@@ -57,8 +64,8 @@ export function useUsualFoods(db, appId, userId, ready, today) {
   return useMemo(
     () =>
       owner && history.owner === owner && history.today === today
-        ? rankUsualFoods(history.days, today)
+        ? rankUsualFoods(history.days, today, excludedFoods)
         : [],
-    [owner, history, today],
+    [owner, history, today, excludedFoods],
   );
 }
