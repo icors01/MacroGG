@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Dashboard from "./components/Dashboard";
+import { rankUsualFoods } from "./utils/usualFoods";
+import { useJournalDate } from "./hooks/useJournalDate";
 import { Modal } from "./components/ui/Modal";
 import { ManualEntryModal } from "./components/modals/ManualEntryModal";
 import { CustomMealModal } from "./components/modals/CustomMealModal";
@@ -44,6 +46,21 @@ const sampleMeals = [
 
 export default function DemoApp() {
   const [foodLog, setFoodLog] = useState(sampleMeals);
+  const journalDate = useJournalDate();
+  const usualFoods = useMemo(() => {
+    const history = Array.from({ length: 12 }, (_, index) => {
+      const date = new Date(journalDate + "T00:00:00Z");
+      date.setUTCDate(date.getUTCDate() - index - 1);
+      return {
+        date: date.toISOString().slice(0, 10),
+        entries: sampleMeals.filter((_, meal) => index % (meal + 2) === 0),
+      };
+    });
+    return rankUsualFoods(
+      [...history, { date: journalDate, entries: foodLog }],
+      journalDate,
+    );
+  }, [foodLog, journalDate]);
   const [customMeals, setCustomMeals] = useState(sampleMeals.slice(0, 2));
   const [aiInput, setAiInput] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -118,7 +135,7 @@ export default function DemoApp() {
             goals,
             foodLog,
             customMeals,
-            recentFoods: sampleMeals.slice(0, 2),
+            usualFoods,
             isAuthReady: true,
             isLoading: false,
             aiInput,

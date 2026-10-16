@@ -96,3 +96,26 @@ browser testing without local tools, push a separate branch and use its Vercel
 **Preview** deployment, with Preview-scoped environment variables. Keep the branch
 unmerged until reviewed. Production deploys from your configured production
 branch (normally `main`); confirm this under Vercel project settings.
+
+## Your usuals
+
+The three-item strip below food entry replaces the old same-day recent-food row.
+It ranks foods logged on at least two different days within the last 30 calendar
+days, weighting recent days more heavily. Each day contributes once to the rank,
+so repeated taps in one day do not dominate suggestions. The displayed log count
+still reflects actual entries. Names with different nutrition values remain
+separate portions; tapping a suggestion reuses its recorded macros.
+
+Recommendations come from one live, date-bounded query of the current user's
+existing daily log documents. There is no AI call, training endpoint, new learning
+collection, or write to saved meal templates. Undo, edits, and deletions update
+suggestions from the logs themselves. Pending writes do not update learning until
+acknowledged. The date window checks for a new local day every 30 seconds and when the app regains focus.
+New accounts see no strip until a food repeats across days. History-read failures
+hide the optional strip without blocking food entry.
+
+The Firebase rules must allow the authenticated user to query their own `logs`
+collection. Live production permissions need validation in the Preview deployment;
+local tests exercise the query shape and behavior with fixtures. The development
+`?demo` page includes sample past days to demonstrate recommendations without any
+Firebase connection.

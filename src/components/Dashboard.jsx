@@ -50,7 +50,7 @@ export default function Dashboard({
     goals,
     foodLog,
     customMeals,
-    recentFoods,
+    usualFoods = [],
     isAuthReady,
     isLoading,
     aiInput,
@@ -349,19 +349,32 @@ export default function Dashboard({
               </p>
             </section>
 
-            {recentFoods.length > 0 && (
-              <section className="recent-section" aria-label="Recent foods">
-                <span className="eyebrow">HAVE IT AGAIN</span>
-                <div className="recent-foods">
-                  {recentFoods.map((food, i) => (
+            {usualFoods.length > 0 && (
+              <section
+                className="usuals-section"
+                aria-labelledby="usuals-title"
+              >
+                <div className="usuals-heading">
+                  <h2 id="usuals-title">Your usuals</h2>
+                  <span>From your last 30 days</span>
+                </div>
+                <div className="usual-foods">
+                  {usualFoods.map((food) => (
                     <button
-                      key={`${food.food}-${i}`}
-                      className="recent-chip"
+                      type="button"
+                      key={food.key}
+                      className="usual-chip"
                       onClick={() => actions.onQuickAdd(food)}
-                      title={`Add ${food.food} again`}
+                      aria-label={`Add ${food.food} again, ${number(food.calories)} kcal`}
+                      title={`${food.food} · ${number(food.calories)} kcal · Logged on ${food.daysLogged} days in the last 30 days`}
                     >
-                      <Plus size={13} />
-                      <span>{food.food}</span>
+                      <span className="usual-chip-copy">
+                        <strong>{food.food}</strong>
+                        <small>
+                          {food.count} logs · {number(food.calories)} kcal
+                        </small>
+                      </span>
+                      <Plus size={15} />
                     </button>
                   ))}
                 </div>

@@ -23,6 +23,9 @@ import { auth, db, appId } from './config/firebase';
 // Utils
 import { playGoalSound, resumeAudioContext } from './utils/sound';
 import { initializeSettings } from './utils/settings';
+import { getLocalDateString } from './utils/usualFoods';
+import { useUsualFoods } from './hooks/useUsualFoods';
+import { useJournalDate } from './hooks/useJournalDate';
 import { DEFAULT_SCHEME_ID, getThemeStyle, getSchemeSettings, isColorScheme } from './utils/colorSchemes';
 
 // Components
@@ -38,12 +41,6 @@ import { ScannerModal } from './components/modals/ScannerModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { SupportModal } from './components/modals/SupportModal';
 import { FireAnimation } from './components/ui/FireAnimation';
-
-// Helper function to get local date string (YYYY-MM-DD)
-const getLocalDateString = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-};
 
 const App = () => {
   // State for user data and Firebase readiness
@@ -138,8 +135,8 @@ const App = () => {
     return localStorage.getItem('windowColor') || '#202722';
   });
   
-  // Recent foods tracking (last 10 unique entries)
-  const [recentFoods, setRecentFoods] = useState([]);
+  const journalDate = useJournalDate();
+  const usualFoods = useUsualFoods(dbInstance, appId, userId, isAuthReady, journalDate);
 
   // --- Utility Functions ---
 
@@ -265,6 +262,10 @@ const App = () => {
         setIsAuthReady(true);
         setIsAuthModalOpen(false);
       } else {
+        // Hide the previous account while a new auth session is established.
+        setUserId(null);
+        setCurrentUser(null);
+        setIsAuthReady(false);
         // No user signed in, attempt platform token sign-in first
         let currentUid;
         try {
@@ -438,7 +439,7 @@ const App = () => {
   useEffect(() => {
     if (!isAuthReady || !userId || !dbInstance) return;
 
-    const today = getLocalDateString();
+    const today = journalDate;
     
     // Listen to today's log document
     const todayLogRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/logs/${today}`);
@@ -516,35 +517,7 @@ const App = () => {
       unsubscribeTodayLog();
       unsubscribeSettings();
     };
-  }, [userId, dbInstance, isAuthReady]);
-
-  // --- Track Recent Foods ---
-  useEffect(() => {
-    if (foodLog.length === 0) {
-      setRecentFoods([]);
-      return;
-    }
-    
-    // Get unique foods based on name, keep most recent 4
-    const uniqueFoods = [];
-    const seenNames = new Set();
-    
-    // Iterate in reverse to get most recent first
-    for (let i = foodLog.length - 1; i >= 0; i--) {
-      const food = foodLog[i];
-      const normalizedName = food.food.toLowerCase();
-      
-      if (!seenNames.has(normalizedName) && uniqueFoods.length < 4) {
-        seenNames.add(normalizedName);
-        uniqueFoods.push(food);
-      }
-      
-      // Early exit if we have enough
-      if (uniqueFoods.length >= 4) break;
-    }
-    
-    setRecentFoods(uniqueFoods);
-  }, [foodLog]);
+  }, [userId, dbInstance, isAuthReady, journalDate]);
 
   // --- Midnight Reset Check ---
   // No longer needed - each day gets its own document automatically
@@ -995,7 +968,7 @@ const App = () => {
     }
   };
 
-  // --- Quick Add from Recent Foods ---
+  // --- Quick Add from Your Usuals ---
   const handleQuickAdd = (recentFood) => {
     addEntryToLog({
       food: recentFood.food,
@@ -1348,7 +1321,7 @@ const App = () => {
         <Dashboard
           historyButtonRef={historyButtonRef}
           theme={{ isDarkMode }}
-          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, recentFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
+          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, usualFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
           account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: activeColorScheme ? { color: 'var(--accent-text, var(--accent))' } : { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
           actions={{
             onSupport: () => setIsSupportModalOpen(true), onToggleTheme: toggleTheme,
