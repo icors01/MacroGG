@@ -1502,3 +1502,148 @@ h2 {
   border-radius: 8px;
   margin: 12px 0;
 }
+
+/* One typography and control system for every dialog, including legacy forms. */
+.app-dialog {
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+}
+.dialog-heading h2 {
+  font-weight: 550;
+  line-height: 1.3;
+}
+.app-dialog :is(p, .text-sm) {
+  font-size: 13px;
+}
+.app-dialog :is(h3, h4) {
+  font-size: 14px;
+  font-weight: 550;
+}
+.app-dialog :is(.font-bold, .font-semibold) {
+  font-weight: 550;
+}
+.app-dialog :is(input, textarea, select) {
+  font-family: inherit;
+  font-size: 13px;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.5;
+}
+.app-dialog input#verify-code {
+  font-size: 24px;
+}
+.app-dialog
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea,
+    select
+  ):focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--muted);
+}
+.app-dialog :is(button, a.button) {
+  font-family: inherit;
+  font-size: 12px;
+}
+.app-dialog .button {
+  min-height: 40px;
+  font-weight: 550;
+}
+.app-dialog .button-primary {
+  background: var(--accent) !important;
+  color: white;
+}
+.app-dialog .button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.app-dialog :is(.bg-gray-100, .bg-gray-200) {
+  background-color: var(--surface-soft);
+}
+.app-dialog :is(.border-gray-200, .border-gray-300) {
+  border-color: var(--line);
+}
+.dialog-accent,
+.app-dialog .dialog-link {
+  color: var(--accent-text, var(--accent));
+}
+.app-dialog .dialog-link:hover {
+  text-decoration: underline;
+}
+.dialog-scan-frame {
+  border-color: var(--accent);
+}
+.dialog-surface {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+.dialog-muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+.dialog-message {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+}
+.dialog-message > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.dialog-danger {
+  color: #c54d48;
+}
+.dark .dialog-danger {
+  color: #f3958f;
+}
+.history-navigation {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.history-selectors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 78px;
+  gap: 6px;
+}
+.app-dialog .history-selectors select {
+  padding: 8px 6px;
+  width: 100%;
+}
+@media (max-width: 480px) {
+  .dialog-backdrop {
+    padding: 12px;
+  }
+  .app-dialog {
+    padding: 20px;
+    max-height: calc(100dvh - 24px);
+  }
+}
+.app-dialog .button-danger {
+  background: #b5443f;
+  color: white;
+  border: 1px solid #b5443f;
+}
+.app-dialog .grid.grid-cols-7 > button {
+  min-height: 0;
+}
+.dialog-field {
+  display: grid;
+  gap: 6px;
+}

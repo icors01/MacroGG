@@ -1,20 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Modal } from '../ui/Modal';
-import { Save } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Modal } from "../ui/Modal";
+import { Save } from "lucide-react";
 
-export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside = false, primaryColor = '#22c55e' }) => {
-  const [formData, setFormData] = useState(item || { 
-    food: '', 
-    calories: 0, 
-    protein: 0, 
-    carbs: 0, 
-    fat: 0 
-  });
+export const EditLogModal = ({
+  isOpen,
+  onClose,
+  item,
+  onSave,
+  allowClickOutside = false,
+  primaryColor = "#22c55e",
+}) => {
+  const [formData, setFormData] = useState(
+    item || {
+      food: "",
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    },
+  );
 
   useEffect(() => {
     if (item) {
       setFormData({
-        food: item.food || '',
+        food: item.food || "",
         calories: item.calories || 0,
         protein: item.protein || 0,
         carbs: item.carbs || 0,
@@ -26,9 +35,9 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value,
+      [name]: type === "number" ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -37,14 +46,25 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
     onSave(formData);
     onClose();
   };
-  
+
   if (!item) return null;
 
   return (
-    <Modal isOpen={isOpen} title={`Edit Entry: ${item.food}`} onClose={onClose} allowClickOutside={allowClickOutside} titleColor="#3b82f6">
-      <form onSubmit={handleSubmit} className="edit-entry-form space-y-4 text-gray-200">
+    <Modal
+      isOpen={isOpen}
+      title="Edit entry"
+      onClose={onClose}
+      allowClickOutside={allowClickOutside}
+      titleColor="#3b82f6"
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="edit-entry-form space-y-4 text-gray-200"
+      >
         <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="edit-food">Description</label>
+          <label className="block text-sm font-medium mb-1" htmlFor="edit-food">
+            Description
+          </label>
           <input
             id="edit-food"
             type="text"
@@ -56,9 +76,12 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {['calories', 'protein', 'carbs', 'fat'].map(macro => (
+          {["calories", "protein", "carbs", "fat"].map((macro) => (
             <div key={macro}>
-              <label className="block text-sm font-medium mb-1" htmlFor={`edit-${macro}`}>
+              <label
+                className="block text-sm font-medium mb-1"
+                htmlFor={`edit-${macro}`}
+              >
                 {macro.charAt(0).toUpperCase() + macro.slice(1)} (g/kcal)
               </label>
               <input
@@ -76,12 +99,12 @@ export const EditLogModal = ({ isOpen, onClose, item, onSave, allowClickOutside 
         </div>
         <button
           type="submit"
-          className="w-full text-white font-semibold py-2 rounded-lg transition-opacity flex items-center justify-center gap-2 mt-6"
+          className="button button-primary w-full mt-6"
           style={{ backgroundColor: primaryColor }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          <Save size={18} /> Save Changes
+          <Save size={18} /> Save changes
         </button>
       </form>
     </Modal>

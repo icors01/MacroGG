@@ -144,22 +144,24 @@ export const CustomMealModal = ({
               value={newMealData.name}
               onChange={handleNewMealChange}
               required
-              className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
             />
             <div className="grid grid-cols-2 gap-3 text-sm">
               {["calories", "protein", "carbs", "fat"].map((macro) => (
-                <input
-                  key={macro}
-                  type="number"
-                  name={macro}
-                  aria-label={macroPlaceholders[macro]}
-                  placeholder={macroPlaceholders[macro]}
-                  value={newMealData[macro]}
-                  onChange={handleNewMealChange}
-                  min="0"
-                  step={macro === "calories" ? "1" : "0.1"}
-                  className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
-                />
+                <label key={macro} className="dialog-field">
+                  <span>{macroPlaceholders[macro]}</span>
+                  <input
+                    type="number"
+                    name={macro}
+                    aria-label={macroPlaceholders[macro]}
+                    placeholder="0"
+                    value={newMealData[macro]}
+                    onChange={handleNewMealChange}
+                    min="0"
+                    step={macro === "calories" ? "1" : "0.1"}
+                    className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
+                  />
+                </label>
               ))}
             </div>
             <div className="flex justify-end gap-3 pt-1">
@@ -201,28 +203,30 @@ export const CustomMealModal = ({
                       value={editMealData.name}
                       onChange={handleEditChange}
                       required
-                      className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
                     />
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {["calories", "protein", "carbs", "fat"].map((macro) => (
-                        <input
-                          key={macro}
-                          type="number"
-                          name={macro}
-                          aria-label={macroPlaceholders[macro]}
-                          placeholder={macroPlaceholders[macro]}
-                          value={editMealData[macro]}
-                          onChange={handleEditChange}
-                          min="0"
-                          step={macro === "calories" ? "1" : "0.1"}
-                          className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        <label key={macro} className="dialog-field">
+                          <span>{macroPlaceholders[macro]}</span>
+                          <input
+                            type="number"
+                            name={macro}
+                            aria-label={macroPlaceholders[macro]}
+                            placeholder="0"
+                            value={editMealData[macro]}
+                            onChange={handleEditChange}
+                            min="0"
+                            step={macro === "calories" ? "1" : "0.1"}
+                            className="w-full p-2 bg-gray-600 rounded-lg border border-gray-500"
+                          />
+                        </label>
                       ))}
                     </div>
                     <div className="flex gap-2">
                       <button
                         type="submit"
-                        className="flex-1 text-white font-semibold py-2 rounded-lg transition-opacity"
+                        className="button button-primary flex-1"
                         style={{ backgroundColor: primaryColor }}
                         onMouseEnter={(e) =>
                           (e.currentTarget.style.opacity = "0.8")
@@ -236,7 +240,7 @@ export const CustomMealModal = ({
                       <button
                         type="button"
                         onClick={handleCancelEdit}
-                        className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg"
+                        className="button button-secondary flex-1"
                       >
                         Cancel
                       </button>
@@ -245,7 +249,7 @@ export const CustomMealModal = ({
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium text-gray-100 truncate">
+                      <p className="font-medium text-gray-100 truncate">
                         {meal.name}
                       </p>
                       <p className="text-xs text-gray-400">

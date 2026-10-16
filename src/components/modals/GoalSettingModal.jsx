@@ -66,7 +66,7 @@ export const GoalSettingModal = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Set Daily Goals"
+      title="Daily goals"
       onClose={onClose}
       allowClickOutside={allowClickOutside}
       titleColor="#3b82f6"
@@ -94,7 +94,7 @@ export const GoalSettingModal = ({
                 onChange={handleChange}
                 min="0"
                 placeholder="0"
-                className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
               />
             </div>
           ))}
@@ -102,7 +102,7 @@ export const GoalSettingModal = ({
 
         {/* Tracking Toggles */}
         <h4 className="text-lg font-semibold text-gray-100 pt-2">
-          Optional Macro Tracking
+          Optional macro tracking
         </h4>
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Carbs Toggle */}
@@ -111,7 +111,7 @@ export const GoalSettingModal = ({
               type="checkbox"
               checked={isCarbTracking}
               onChange={() => setIsCarbTracking(!isCarbTracking)}
-              className="w-4 h-4 text-yellow-500 bg-gray-600 border-gray-500 rounded focus:ring-yellow-500"
+              className="w-4 h-4 text-yellow-500 bg-gray-600 border-gray-500 rounded"
             />
             <span className="text-sm font-medium">Track Carbs (g)</span>
           </label>
@@ -122,7 +122,7 @@ export const GoalSettingModal = ({
               type="checkbox"
               checked={isFatTracking}
               onChange={() => setIsFatTracking(!isFatTracking)}
-              className="w-4 h-4 text-red-500 bg-gray-600 border-gray-500 rounded focus:ring-red-500"
+              className="w-4 h-4 text-red-500 bg-gray-600 border-gray-500 rounded"
             />
             <span className="text-sm font-medium">Track Fat (g)</span>
           </label>
@@ -152,7 +152,7 @@ export const GoalSettingModal = ({
                     onChange={handleChange}
                     min="0"
                     placeholder="0"
-                    className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
                   />
                 </div>
               ),
@@ -161,12 +161,12 @@ export const GoalSettingModal = ({
 
         <button
           type="submit"
-          className="w-full text-white font-semibold py-2 rounded-lg transition-opacity flex items-center justify-center gap-2 mt-6"
+          className="button button-primary w-full mt-6"
           style={{ backgroundColor: primaryColor }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          <Save size={18} /> Save Goals
+          <Save size={18} /> Save goals
         </button>
       </form>
     </Modal>

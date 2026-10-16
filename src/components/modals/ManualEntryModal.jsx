@@ -53,7 +53,7 @@ export const ManualEntryModal = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Add Manual Entry"
+      title="Add entry"
       onClose={onClose}
       allowClickOutside={allowClickOutside}
       titleColor={secondaryColor}
@@ -166,12 +166,12 @@ export const ManualEntryModal = ({
 
         <button
           type="submit"
-          className="w-full text-white font-semibold py-2 rounded-lg transition-opacity flex items-center justify-center gap-2 mt-6"
+          className="button button-primary w-full mt-6"
           style={{ backgroundColor: primaryColor }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          <Save size={18} /> Add Entry
+          <Save size={18} /> Add entry
         </button>
       </form>
     </Modal>

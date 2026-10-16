@@ -1,12 +1,16 @@
 import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
+const openDialogs = [];
+let originalOverflow = "";
+
 export const Modal = ({
   isOpen,
   title,
   onClose,
   children,
   allowClickOutside = false,
+  zIndex = 50,
 }) => {
   const titleId = useId();
   const panel = useRef(null);
@@ -15,10 +19,15 @@ export const Modal = ({
   useEffect(() => {
     if (!isOpen) return;
     const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
+    if (!openDialogs.length) originalOverflow = document.body.style.overflow;
+    const entry = { panel: panel.current, zIndex };
+    openDialogs.push(entry);
+    const top = () =>
+      [...openDialogs].sort((a, b) => a.zIndex - b.zIndex).at(-1);
     document.body.style.overflow = "hidden";
     panel.current?.focus();
     const onKeyDown = (event) => {
+      if (top() !== entry) return;
       if (event.key === "Escape") {
         event.preventDefault();
         close.current();
@@ -52,18 +61,23 @@ export const Modal = ({
         }
       }
     };
-    const current = panel.current;
-    current?.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      current?.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = overflow;
-      if (previous?.isConnected) previous.focus();
+      document.removeEventListener("keydown", onKeyDown);
+      openDialogs.splice(openDialogs.indexOf(entry), 1);
+      if (!openDialogs.length) {
+        document.body.style.overflow = originalOverflow;
+        if (previous?.isConnected) previous.focus();
+      } else if (!top().panel?.contains(document.activeElement)) {
+        top().panel?.focus();
+      }
     };
-  }, [isOpen]);
+  }, [isOpen, zIndex]);
   if (!isOpen) return null;
   return (
     <div
       className="dialog-backdrop"
+      style={{ zIndex }}
       onClick={(e) => {
         if (allowClickOutside && e.target === e.currentTarget) onClose();
       }}

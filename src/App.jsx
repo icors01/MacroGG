@@ -15,7 +15,7 @@ import {
   getDoc,
   runTransaction
 } from "firebase/firestore";
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 // Firebase configuration
 import { auth, db, appId } from './config/firebase';
@@ -72,6 +72,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // UI/Modal state
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [notificationType, setNotificationType] = useState("success"); // 'success' or 'error'
@@ -145,30 +147,6 @@ const App = () => {
     setNotificationType(type);
     setIsErrorModalOpen(true);
   };
-  
-  // --- Close modals on Escape key ---
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        if (isErrorModalOpen) setIsErrorModalOpen(false);
-        else if (isEditModalOpen) setIsEditModalOpen(false);
-        else if (isMealModalOpen) setIsMealModalOpen(false);
-        else if (isGoalModalOpen) setIsGoalModalOpen(false);
-        else if (isAuthModalOpen) setIsAuthModalOpen(false);
-        else if (isManualEntryOpen) setIsManualEntryOpen(false);
-        else if (isScannerOpen) setIsScannerOpen(false);
-        else if (isSettingsOpen) setIsSettingsOpen(false);
-        else if (isHistoryModalOpen) {
-          setIsHistoryModalOpen(false);
-          setSelectedHistoryDate(null);
-          setHistoryLog([]);
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isErrorModalOpen, isEditModalOpen, isMealModalOpen, isGoalModalOpen, isAuthModalOpen, isManualEntryOpen, isScannerOpen, isHistoryModalOpen]);
   
   // --- Resume AudioContext on first user interaction ---
   useEffect(() => {
@@ -939,9 +917,8 @@ const App = () => {
   const handleResetProgress = async () => {
     if (!dbInstance || !userId) return;
 
-    const confirmed = window.confirm("Are you sure you want to reset today's progress? This will clear all food log entries for today.");
-    
-    if (confirmed) {
+    if (!isResetting) {
+      setIsResetting(true);
       const today = getLocalDateString();
       
       try {
@@ -951,19 +928,21 @@ const App = () => {
         const currentEntries = [...foodLog];
         const resetTimestamp = Date.now();
         
+        await updateDoc(todayLogRef, { entries: [] });
+        setIsResetConfirmOpen(false);
+
         // Clear previous undo/redo stacks and only keep the reset action
         setUndoStack([
           ...currentEntries.map(entry => ({ entry, date: today, resetTimestamp, action: 'delete' }))
         ]);
         setRedoStack([]);
         
-        await updateDoc(todayLogRef, {
-          entries: []
-        });
         showError("Daily progress reset successfully!", "success");
       } catch (error) {
         console.error("Error resetting progress: ", error);
         showError("Error resetting progress: " + error.message, "error");
+      } finally {
+        setIsResetting(false);
       }
     }
   };
@@ -1093,44 +1072,23 @@ const App = () => {
       <div className="app-container">
         
         {/* Error/Notification Modal */}
-        {isErrorModalOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center p-4"
-            style={{ zIndex: 100 }}
-            onClick={() => setIsErrorModalOpen(false)}
-          >
-            <div 
-              className="app-dialog" role="dialog" aria-modal="true" aria-label="Notification"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold" style={{ color: notificationType === "success" ? primaryColor : '#dc2626' }}>
-                  Notification
-                </h3>
-                <button onClick={() => setIsErrorModalOpen(false)} className="text-gray-400 hover:text-gray-100 p-1">
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                {notificationType === "success" ? (
-                  <CheckCircle size={24} className="flex-shrink-0" style={{ color: primaryColor }} />
-                ) : (
-                  <AlertCircle size={24} className="text-red-400 flex-shrink-0" />
-                )}
-                <p className="text-gray-300">{modalMessage}</p>
-              </div>
-              <button
-                onClick={() => setIsErrorModalOpen(false)}
-                className="w-full font-semibold py-2 rounded-lg transition-colors text-white"
-                style={{
-                  backgroundColor: notificationType === "success" ? primaryColor : '#dc2626',
-                }}
-              >
-                Close
-              </button>
-            </div>
+        <Modal isOpen={isErrorModalOpen} title="Notification" onClose={() => setIsErrorModalOpen(false)} zIndex={100} allowClickOutside>
+          <div className="dialog-message" role="status">
+            {notificationType === "success" ? <CheckCircle size={20} className="dialog-accent" /> : <AlertCircle size={20} className="dialog-danger" />}
+            <p>{modalMessage}</p>
           </div>
-        )}
+          <div className="dialog-actions">
+            <button className="button button-secondary" onClick={() => setIsErrorModalOpen(false)}>Close</button>
+          </div>
+        </Modal>
+
+        <Modal isOpen={isResetConfirmOpen} title="Clear today's entries?" onClose={() => { if (!isResetting) setIsResetConfirmOpen(false); }}>
+          <p>This clears today's food log. Your saved meals and daily goals stay saved. You can restore the entries with Undo.</p>
+          <div className="dialog-actions">
+            <button className="button button-secondary" disabled={isResetting} onClick={() => setIsResetConfirmOpen(false)}>Cancel</button>
+            <button className="button button-danger" disabled={isResetting} onClick={handleResetProgress}>{isResetting ? "Clearing…" : "Clear entries"}</button>
+          </div>
+        </Modal>
 
         {/* Edit Log Entry Modal */}
         <EditLogModal
@@ -1329,7 +1287,7 @@ const App = () => {
             onSignIn: () => setIsAuthModalOpen(true), onNameInput: setNameInput,
             onSaveName: handleUpdateUsername, onCancelName: () => setIsEditingName(false),
             onGoals: () => setIsGoalModalOpen(true), onHistory: handleViewHistory,
-            onReset: handleResetProgress, onMeals: () => setIsMealModalOpen(true),
+            onReset: () => setIsResetConfirmOpen(true), onMeals: () => setIsMealModalOpen(true),
             onAiAdd: handleAiAdd, onAiInput: setAiInput,
             onManual: () => setIsManualEntryOpen(true), onScanner: () => setIsScannerOpen(true),
             onQuickAdd: handleQuickAdd, onUndo: handleUndoDelete, onRedo: handleRedoDelete,
