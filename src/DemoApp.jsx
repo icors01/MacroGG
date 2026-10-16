@@ -285,6 +285,7 @@ export default function DemoApp() {
           {...colors}
         />
         <GoalSettingModal
+          demo
           isOpen={modal === "goals"}
           onClose={close}
           goals={goals}

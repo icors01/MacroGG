@@ -242,6 +242,8 @@ const App = () => {
     }
 
     const unsub = onAuthStateChanged(auth, async (user) => {
+      // Discard unsaved goal-helper metrics when the account changes.
+      setIsGoalModalOpen(false);
       if (user) {
         // User is signed in (either via token, email/password, or anonymously)
         setUserId(user.uid);
@@ -552,7 +554,7 @@ const App = () => {
   const handleSaveGoals = async (goals) => {
     if (!dbInstance || !userId) {
       showError("Goals update failed. Database not ready.");
-      return;
+      return false;
     }
     
     const updatePayload = {
@@ -567,9 +569,11 @@ const App = () => {
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
       await updateDoc(settingsRef, updatePayload);
+      return true;
     } catch (error) {
       console.error("Error setting new goal: ", error);
       showError("Error setting goal: " + error.message);
+      return false;
     }
   };
 

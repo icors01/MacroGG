@@ -7,7 +7,7 @@ A simple nutrition journal for tracking calories, protein, carbs, and fat.
 - **Log food your way:** describe a meal for an AI estimate, enter macros manually, or scan a barcode.
 - **Save your favorites:** create reusable meals and pin up to three for one-tap logging.
 - **Get recommendations:** Quick add suggests foods you log regularly, with your pinned meals first.
-- **Track your progress:** set daily goals, browse past logs, and undo or redo changes.
+- **Track your progress:** set daily goals, get help estimating targets, browse past logs, and undo or redo changes.
 - **Make it yours:** choose from six color schemes with light/dark modes and live previews.
 - **Keep your data synced:** sign in to save meals, goals, and logs across devices. Password resets use an emailed link.
 
@@ -36,6 +36,12 @@ The demo uses sample data, needs no credentials, and resets when refreshed. It m
 Use a Firebase test project for development. Keep `.env.local` out of Git and keep the Gemini key server-side—never prefix it with `VITE_`.
 
 Signup verification currently uses the EmailJS configuration in `src/components/modals/AuthModal.jsx`. The separate `/api/send-email` endpoint uses the `EMAILJS_*` variables in `.env.example`.
+
+## Get help setting goals
+
+Open **Goals → Help me set my goals**. Enter your measurements, activity, and goal—or provide your own maintenance estimate. Review and edit the suggested calories and macros, then select **Apply goals** to save. Canceling keeps your current goals.
+
+Calculations use Mifflin–St Jeor and conservative calorie adjustments. An optional Gemini explanation describes the starting calculation; it cannot change your targets. Body metrics stay in the dialog and are not sent to Gemini or saved. The local demo offers a sample explanation without an AI request.
 
 ## How Quick add works
 

@@ -1681,3 +1681,68 @@ h2 {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.goal-helper,
+.goal-helper-form {
+  display: grid;
+  gap: 16px;
+}
+.goal-helper-launch {
+  width: 100%;
+  justify-content: center;
+}
+.goal-helper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+.goal-helper-note {
+  padding: 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.goal-calculation {
+  display: grid;
+  gap: 10px;
+}
+.goal-calculation summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 550;
+}
+.goal-calculation > :not(summary) {
+  margin-top: 10px;
+}
+.goal-calculation .text-button {
+  padding-left: 0;
+}
+.goal-ai-copy {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.goal-helper-tracking {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.goal-helper-tracking label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.goal-helper .dialog-actions {
+  margin-top: 0;
+}
+.goal-helper .dialog-field input,
+.goal-helper .dialog-field select {
+  width: 100%;
+}
+@media (max-width: 380px) {
+  .goal-helper-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
