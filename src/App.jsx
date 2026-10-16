@@ -12,7 +12,8 @@ import {
   updateDoc, 
   arrayUnion, 
   arrayRemove,
-  getDoc 
+  getDoc,
+  runTransaction
 } from "firebase/firestore";
 import { 
   Loader2, Trash2, Sparkles, Brain, X, Flame, Beef, Target, 
@@ -25,6 +26,7 @@ import { auth, db, appId } from './config/firebase';
 
 // Utils
 import { playGoalSound, resumeAudioContext } from './utils/sound';
+import { initializeSettings } from './utils/settings';
 
 // Components
 import { Modal } from './components/ui/Modal';
@@ -396,34 +398,12 @@ const App = () => {
       try {
         // Check if migration already completed
         const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
-        const settingsSnap = await getDoc(settingsRef);
-        
-        // If settings exist, migration already done or user is using new structure
-        if (settingsSnap.exists() && settingsSnap.data().migrated !== false) {
-          return;
-        }
-        
-        // Check for old data structure
         const oldLogRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/calorieTracker/log`);
-        const oldDocSnap = await getDoc(oldLogRef);
-        
-        if (oldDocSnap.exists()) {
-          const oldData = oldDocSnap.data();
-          console.log("Old data structure detected, migrating...");
-          
-          // Migrate settings (goals, custom meals, tracking preferences)
-          const settingsData = {
-            dailyGoal: oldData.dailyGoal || 2000,
-            proteinGoal: oldData.proteinGoal || 150,
-            carbGoal: oldData.carbGoal || 250,
-            fatGoal: oldData.fatGoal || 70,
-            customMeals: oldData.customMeals || [],
-            isTrackingCarbs: oldData.isTrackingCarbs || false,
-            isTrackingFat: oldData.isTrackingFat || false,
-            migrated: true, // Mark as migrated
-          };
-          await setDoc(settingsRef, settingsData);
-          
+        const oldData = await runTransaction(dbInstance, transaction =>
+          initializeSettings(transaction, settingsRef, oldLogRef)
+        );
+
+        if (oldData) {
           // Migrate entries grouped by date
           if (oldData.entries && oldData.entries.length > 0) {
             const entriesByDate = {};
@@ -529,9 +509,8 @@ const App = () => {
         setCustomMeals(defaultSettings.customMeals);
         setIsTrackingCarbs(defaultSettings.isTrackingCarbs);
         setIsTrackingFat(defaultSettings.isTrackingFat);
-        // Create document in Firestore
-        setDoc(settingsRef, defaultSettings)
-          .catch(e => console.error("Error creating settings document:", e));
+        // Initialization runs in a transaction above. A missing local/cache
+        // snapshot must never overwrite settings saved by another client.
       }
     }, (error) => {
       console.error("Error in settings listener: ", error);
@@ -908,57 +887,56 @@ const App = () => {
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
       
-      // First check if document exists
-      const docSnap = await getDoc(settingsRef);
-      
-      if (docSnap.exists()) {
-        const currentMeals = docSnap.data().customMeals || [];
-        
-        // Check if exact duplicate exists (excluding the current meal being edited)
-        const duplicateExists = currentMeals.some(meal => 
-          meal.id !== mealTemplate.id &&
-          meal.name === mealTemplate.name &&
-          meal.calories === mealTemplate.calories &&
-          meal.protein === mealTemplate.protein &&
-          meal.carbs === mealTemplate.carbs &&
-          meal.fat === mealTemplate.fat
-        );
+      await runTransaction(dbInstance, async transaction => {
+        const docSnap = await transaction.get(settingsRef);
 
-        if (duplicateExists) {
-          showError("A meal with the same name and macros already exists!");
-          return;
-        }
+        if (docSnap.exists()) {
+          const currentMeals = docSnap.data().customMeals || [];
 
-        // Check if we're editing an existing meal
-        const existingMealIndex = currentMeals.findIndex(meal => meal.id === mealTemplate.id);
-        
-        if (existingMealIndex !== -1) {
-          // Update existing meal
-          const updatedMeals = [...currentMeals];
-          updatedMeals[existingMealIndex] = mealTemplate;
-          await updateDoc(settingsRef, {
-            customMeals: updatedMeals
-          });
+          // Check if exact duplicate exists (excluding the current meal being edited)
+          const duplicateExists = currentMeals.some(meal =>
+            meal.id !== mealTemplate.id &&
+            meal.name === mealTemplate.name &&
+            meal.calories === mealTemplate.calories &&
+            meal.protein === mealTemplate.protein &&
+            meal.carbs === mealTemplate.carbs &&
+            meal.fat === mealTemplate.fat
+          );
+
+          if (duplicateExists) {
+            throw new Error("A meal with the same name and macros already exists!");
+          }
+
+          // Check if we're editing an existing meal
+          const existingMealIndex = currentMeals.findIndex(meal => meal.id === mealTemplate.id);
+
+          if (existingMealIndex !== -1) {
+            // Update existing meal
+            const updatedMeals = [...currentMeals];
+            updatedMeals[existingMealIndex] = mealTemplate;
+            transaction.update(settingsRef, {
+              customMeals: updatedMeals
+            });
+          } else {
+            // Add new meal
+            transaction.update(settingsRef, {
+              customMeals: arrayUnion(mealTemplate)
+            });
+          }
         } else {
-          // Add new meal
-          await updateDoc(settingsRef, {
-            customMeals: arrayUnion(mealTemplate)
+          // Create document with the meal
+          transaction.set(settingsRef, {
+            dailyGoal: 2000,
+            proteinGoal: 150,
+            carbGoal: 250,
+            fatGoal: 70,
+            customMeals: [mealTemplate],
+            isTrackingCarbs: false,
+            isTrackingFat: false
           });
-          showError(`Custom meal "${mealTemplate.name}" saved!`, "success");
         }
-      } else {
-        // Create document with the meal
-        await setDoc(settingsRef, {
-          dailyGoal: 2000,
-          proteinGoal: 150,
-          carbGoal: 250,
-          fatGoal: 70,
-          customMeals: [mealTemplate],
-          isTrackingCarbs: false,
-          isTrackingFat: false
-        });
-        showError(`Custom meal "${mealTemplate.name}" saved!`, "success");
-      }
+      });
+      showError(`Custom meal "${mealTemplate.name}" saved!`, "success");
     } catch (error) {
       console.error("Error saving meal template: ", error);
       showError("Error saving meal template: " + error.message);
