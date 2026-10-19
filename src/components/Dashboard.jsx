@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useId, useRef } from "react";
 import {
   ArrowRight,
   Bookmark,
   BookmarkPlus,
   Camera,
   Check,
-  ChevronRight,
+  ChevronDown,
   Flame,
   History,
   LogIn,
@@ -46,13 +46,17 @@ export default function Dashboard({
   account,
   theme,
   historyButtonRef,
+  savedMealsPanel,
 }) {
+  const mealsPanelId = useId();
+  const mealsToggle = useRef(null);
   const feedback = useDialogFeedback();
   const {
     totals,
     goals,
     foodLog,
     customMeals,
+    isMealsOpen = false,
     usualFoods = [],
     pinnedMeals = [],
     isAuthReady,
@@ -258,24 +262,45 @@ export default function Dashboard({
               </div>
             </section>
 
-            <section className="saved-meals-card">
-              <div className="saved-icon">
-                <Bookmark size={20} strokeWidth={1.6} />
-              </div>
-              <h2>Your go-to meals.</h2>
-              <p>
-                Keep the meals you love.
-                <br />
-                Log them again in a tap.
-              </p>
+            <section
+              className={`saved-meals-card saved-meals-browser ${isMealsOpen ? "is-open" : ""}`}
+            >
               <button
-                className="button button-secondary"
-                onClick={actions.onMeals}
+                ref={mealsToggle}
+                type="button"
+                className="meals-toggle"
+                aria-label="Manage saved meals"
+                aria-expanded={isMealsOpen}
+                aria-controls={mealsPanelId}
+                onClick={actions.onToggleMeals || actions.onMeals}
               >
-                Manage saved meals{" "}
+                <Bookmark size={18} />
+                <span>Saved meals</span>
                 <span className="count-badge">{customMeals.length}</span>
-                <ChevronRight size={16} />
+                <ChevronDown size={16} className="meals-chevron" />
               </button>
+              <div
+                id={mealsPanelId}
+                className="meals-dropdown"
+                inert={isMealsOpen ? undefined : ""}
+                aria-hidden={!isMealsOpen}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape" && isMealsOpen) {
+                    event.stopPropagation();
+                    actions.onToggleMeals?.();
+                    mealsToggle.current?.focus();
+                  }
+                }}
+              >
+                <div className="meals-dropdown-clip">
+                  <section
+                    className="meals-dropdown-body"
+                    aria-label="Saved meals"
+                  >
+                    {savedMealsPanel}
+                  </section>
+                </div>
+              </div>
             </section>
             {currentStreak >= 3 && (
               <div className="streak-note">
@@ -381,7 +406,17 @@ export default function Dashboard({
                   <button
                     type="button"
                     className="text-button"
-                    onClick={actions.onMeals}
+                    onClick={() => {
+                      actions.onMeals();
+                      mealsToggle.current?.scrollIntoView({
+                        behavior: window.matchMedia(
+                          "(prefers-reduced-motion: reduce)",
+                        ).matches
+                          ? "auto"
+                          : "smooth",
+                        block: "center",
+                      });
+                    }}
                   >
                     Manage meals
                   </button>

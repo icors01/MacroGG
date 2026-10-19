@@ -5,7 +5,7 @@ A simple nutrition journal for tracking calories, protein, carbs, and fat.
 ## What you can do
 
 - **Log food your way:** describe a meal for an AI estimate, enter macros manually, or scan a barcode.
-- **Save your favorites:** create reusable meals and pin up to three for one-tap logging.
+- **Save your favorites:** browse, add, and edit meals in an expandable sidebar panel; pin up to three for one-tap logging.
 - **Get recommendations:** Quick add suggests foods you log regularly, with your pinned meals first.
 - **Track your progress:** set daily goals, get help estimating targets, browse past logs, and undo or redo changes.
 - **Make it yours:** choose from six color schemes with light/dark modes and live previews.
@@ -45,7 +45,7 @@ Calculations use Mifflin–St Jeor and conservative calorie adjustments. An opti
 
 ## How Quick add works
 
-- **Pinned meals:** open **Manage saved meals** and tap a meal's pin icon. Up to three stay in your chosen order, marked with a small corner pin.
+- **Pinned meals:** expand **Saved meals** in the sidebar and tap a meal's pin icon. Up to three stay in your chosen order, marked with a small corner pin.
 - **Recommendations:** appear after the same food and portion are logged on at least two different days within the last 30 days. More frequent and recent days rank higher.
 - **No duplicates:** pinned matches are hidden from recommendations. Tap any card to log it; use Undo to reverse the addition.
 

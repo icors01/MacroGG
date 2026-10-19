@@ -6,7 +6,7 @@ import { rankUsualFoods } from "./utils/usualFoods";
 import { useJournalDate } from "./hooks/useJournalDate";
 import { Modal } from "./components/ui/Modal";
 import { ManualEntryModal } from "./components/modals/ManualEntryModal";
-import { CustomMealModal } from "./components/modals/CustomMealModal";
+import { SavedMealsPanel } from "./components/SavedMealsPanel";
 import { EditLogModal } from "./components/modals/EditLogModal";
 import { GoalSettingModal } from "./components/modals/GoalSettingModal";
 import { SettingsModal } from "./components/modals/SettingsModal";
@@ -88,6 +88,7 @@ export default function DemoApp() {
     isTrackingCarbs: true,
     isTrackingFat: true,
   });
+  const [isMealsOpen, setIsMealsOpen] = useState(false);
   const [modal, setModal] = useState(null);
   const [editing, setEditing] = useState(null);
   const [undo, setUndo] = useState([]);
@@ -174,6 +175,41 @@ export default function DemoApp() {
             Changes reset when you refresh.
           </div>
           <Dashboard
+            savedMealsPanel={
+              <SavedMealsPanel
+                isOpen={isMealsOpen}
+                customMeals={customMeals}
+                pinnedMealIds={pinnedMeals.map((meal) => meal.id)}
+                onTogglePin={(meal) =>
+                  setPinnedMealIds((ids) =>
+                    togglePinnedMeal(
+                      { customMeals, pinnedMealIds: ids },
+                      meal.id,
+                    ),
+                  )
+                }
+                onAddMeal={addEntry}
+                onSaveMeal={(meal) => {
+                  setCustomMeals((meals) =>
+                    meals.some((saved) => saved.id === meal.id)
+                      ? meals.map((saved) =>
+                          saved.id === meal.id ? meal : saved,
+                        )
+                      : [...meals, { ...meal, id: crypto.randomUUID() }],
+                  );
+                  feedback.notify("Meal saved", "success");
+                  return true;
+                }}
+                onDeleteMeal={(meal) => {
+                  setPinnedMealIds((ids) => ids.filter((id) => id !== meal.id));
+                  setCustomMeals((meals) =>
+                    meals.filter((saved) => saved.id !== meal.id),
+                  );
+                  feedback.notify("Meal deleted", "success");
+                }}
+                {...colors}
+              />
+            }
             theme={{ isDarkMode }}
             account={{ username, user: { email: "alex@example.com" } }}
             data={{
@@ -181,6 +217,7 @@ export default function DemoApp() {
               goals,
               foodLog,
               customMeals,
+              isMealsOpen,
               usualFoods,
               pinnedMeals,
               isAuthReady: true,
@@ -202,7 +239,8 @@ export default function DemoApp() {
               },
               onToggleTheme: () => setIsDarkMode((mode) => !mode),
               onManual: () => setModal("manual"),
-              onMeals: () => setModal("meals"),
+              onMeals: () => setIsMealsOpen(true),
+              onToggleMeals: () => setIsMealsOpen((open) => !open),
               onGoals: () => setModal("goals"),
               onQuickAdd: addEntry,
               onHistory: () =>
@@ -265,35 +303,6 @@ export default function DemoApp() {
             isOpen={modal === "manual"}
             onClose={close}
             onSave={addEntry}
-            {...colors}
-          />
-          <CustomMealModal
-            isOpen={modal === "meals"}
-            onClose={close}
-            customMeals={customMeals}
-            pinnedMealIds={pinnedMeals.map((meal) => meal.id)}
-            onTogglePin={(meal) =>
-              setPinnedMealIds((ids) =>
-                togglePinnedMeal({ customMeals, pinnedMealIds: ids }, meal.id),
-              )
-            }
-            onAddMeal={addEntry}
-            onSaveMeal={(meal) => {
-              setCustomMeals((meals) =>
-                meals.some((saved) => saved.id === meal.id)
-                  ? meals.map((saved) => (saved.id === meal.id ? meal : saved))
-                  : [...meals, { ...meal, id: crypto.randomUUID() }],
-              );
-              feedback.notify("Meal saved", "success");
-              return true;
-            }}
-            onDeleteMeal={(meal) => {
-              setPinnedMealIds((ids) => ids.filter((id) => id !== meal.id));
-              setCustomMeals((meals) =>
-                meals.filter((saved) => saved.id !== meal.id),
-              );
-              feedback.notify("Meal deleted", "success");
-            }}
             {...colors}
           />
           <EditLogModal

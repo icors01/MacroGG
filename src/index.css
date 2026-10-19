@@ -1847,3 +1847,135 @@ h2 {
     transition: none;
   }
 }
+
+/* Saved meals stay in the sidebar instead of covering the journal. */
+.saved-meals-card.saved-meals-browser {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  overflow: hidden;
+}
+.meals-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 15px 16px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 550;
+  text-align: left;
+}
+.meals-toggle > svg:first-child {
+  color: var(--accent-text, var(--accent));
+  flex-shrink: 0;
+}
+.saved-meals-browser .count-badge {
+  margin-left: auto;
+}
+.meals-chevron {
+  transition: transform 260ms ease;
+}
+.saved-meals-browser.is-open .meals-chevron {
+  transform: rotate(180deg);
+}
+.meals-dropdown {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 280ms ease,
+    visibility 280ms;
+}
+.saved-meals-browser.is-open .meals-dropdown {
+  grid-template-rows: 1fr;
+  visibility: visible;
+}
+.meals-dropdown-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.meals-dropdown-body {
+  border-top: 1px solid var(--line);
+}
+.saved-meals-panel.app-dialog {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+  padding: 14px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+}
+.saved-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.saved-meals-panel .saved-panel-heading h3 {
+  font-size: 12px;
+}
+.saved-panel-heading .text-button {
+  font-size: 10px;
+  padding: 0;
+}
+.saved-meals-browser .saved-meals-panel p {
+  display: block;
+  margin: 0;
+  line-height: 1.6;
+}
+.saved-meals-panel .saved-meals-list {
+  max-height: min(420px, 55dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.saved-meals-panel .saved-meals-list.is-editing {
+  max-height: none;
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
+.saved-meals-panel .saved-meal-row {
+  gap: 6px;
+}
+.saved-meals-panel .saved-meal-actions {
+  gap: 4px;
+}
+.saved-meals-panel .saved-meal-actions button {
+  min-height: 30px;
+  width: 30px;
+  padding: 5px;
+}
+.saved-meals-panel .saved-meal-row > .flex-1 {
+  min-width: 100%;
+}
+.saved-meals-card .saved-meals-panel .button {
+  width: auto;
+  flex: initial;
+  padding: 8px 10px;
+  font-size: 11px;
+  justify-content: center;
+}
+.saved-meals-card .saved-meals-panel .button.w-full {
+  width: 100%;
+}
+.saved-meals-card .saved-meals-panel .button.flex-1 {
+  flex: 1;
+}
+.saved-meals-card .saved-meals-panel .button svg {
+  display: block;
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .meals-dropdown,
+  .meals-chevron {
+    transition: none;
+  }
+}

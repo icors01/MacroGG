@@ -35,7 +35,7 @@ import { Modal } from './components/ui/Modal';
 import Dashboard from './components/Dashboard';
 import { AuthModal } from './components/modals/AuthModal';
 import { EditLogModal } from './components/modals/EditLogModal';
-import { CustomMealModal } from './components/modals/CustomMealModal';
+import { SavedMealsPanel } from './components/SavedMealsPanel';
 import { GoalSettingModal } from './components/modals/GoalSettingModal';
 import { ManualEntryModal } from './components/modals/ManualEntryModal';
 import { HistoryModal } from './components/modals/HistoryModal';
@@ -88,7 +88,9 @@ const App = () => {
   const undoAction = React.useRef(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [isMealModalOpen, setIsMealModalOpen] = useState(false);
+  const [isMealsOpen, setIsMealsOpen] = useState(false);
+  const mealsOpen = React.useRef(false);
+  mealsOpen.current = isMealsOpen;
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
@@ -239,6 +241,7 @@ const App = () => {
       // Discard unsaved goal-helper metrics when the account changes.
       setIsGoalModalOpen(false);
       feedback.clear();
+      setIsMealsOpen(false);
       if (user) {
         // User is signed in (either via token, email/password, or anonymously)
         setUserId(user.uid);
@@ -909,7 +912,7 @@ const App = () => {
       return true;
     } catch (error) {
       console.error("Error saving meal template: ", error);
-      showError(error.code === "meal-already-exists" ? error.message : "Error saving meal template: " + error.message, error.code === "meal-already-exists" ? "info" : "error");
+      showError(error.code === "meal-already-exists" ? error.message : "Error saving meal template: " + error.message, error.code === "meal-already-exists" ? "info" : "error", { scope: mealsOpen.current ? "saved-meals" : undefined });
       return false;
     }
   };
@@ -938,7 +941,7 @@ const App = () => {
         });
       });
     } catch (error) {
-      if (auth.currentUser?.uid === owner) showError("Could not update pinned meals: " + error.message);
+      if (auth.currentUser?.uid === owner) showError("Could not update pinned meals: " + error.message, "error", { scope: mealsOpen.current ? "saved-meals" : undefined });
     } finally {
       setPinPending(null);
     }
@@ -962,7 +965,7 @@ const App = () => {
       return true;
     } catch (error) {
       console.error("Error deleting meal template: ", error);
-      showError("Error deleting meal template: " + error.message, "error");
+      showError("Error deleting meal template: " + error.message, "error", { scope: mealsOpen.current ? "saved-meals" : undefined });
       return false;
     }
   };
@@ -1144,22 +1147,6 @@ const App = () => {
           primaryColor={primaryColor}
         />
 
-        {/* Custom Meal Management Modal */}
-        <CustomMealModal
-          isOpen={isMealModalOpen}
-          onClose={() => setIsMealModalOpen(false)}
-          customMeals={customMeals}
-          pinnedMealIds={pinnedMeals.map(meal => meal.id)}
-          onTogglePin={handleTogglePin}
-          isPinPending={pinPending?.owner === userId}
-          onSaveMeal={handleSaveMealTemplate}
-          onAddMeal={handleAddMealToLog}
-          onDeleteMeal={handleDeleteMealTemplate}
-          allowClickOutside={true}
-          secondaryColor={secondaryColor}
-          primaryColor={primaryColor}
-        />
-        
         {/* Goal Setting Modal */}
         <GoalSettingModal 
           isOpen={isGoalModalOpen}
@@ -1325,9 +1312,22 @@ const App = () => {
         )}
 
         <Dashboard
+          savedMealsPanel={
+            <SavedMealsPanel
+              isOpen={isMealsOpen}
+              customMeals={customMeals}
+              pinnedMealIds={pinnedMeals.map(meal => meal.id)}
+              onTogglePin={handleTogglePin}
+              isPinPending={pinPending?.owner === userId}
+              onSaveMeal={handleSaveMealTemplate}
+              onAddMeal={handleAddMealToLog}
+              onDeleteMeal={handleDeleteMealTemplate}
+              primaryColor={primaryColor}
+            />
+          }
           historyButtonRef={historyButtonRef}
           theme={{ isDarkMode }}
-          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, pinnedMeals, usualFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
+          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, isMealsOpen, pinnedMeals, usualFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
           account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: activeColorScheme ? { color: 'var(--accent-text, var(--accent))' } : { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
           actions={{
             onSupport: () => setIsSupportModalOpen(true), onToggleTheme: toggleTheme,
@@ -1335,7 +1335,8 @@ const App = () => {
             onSignIn: () => setIsAuthModalOpen(true), onNameInput: setNameInput,
             onSaveName: handleUpdateUsername, onCancelName: () => setIsEditingName(false),
             onGoals: () => setIsGoalModalOpen(true), onHistory: handleViewHistory,
-            onReset: () => setIsResetConfirmOpen(true), onMeals: () => setIsMealModalOpen(true),
+            onReset: () => setIsResetConfirmOpen(true), onMeals: () => setIsMealsOpen(true),
+            onToggleMeals: () => setIsMealsOpen(open => !open),
             onAiAdd: handleAiAdd, onAiInput: setAiInput,
             onManual: () => setIsManualEntryOpen(true), onScanner: () => setIsScannerOpen(true),
             onPinnedAdd: handleAddMealToLog, onQuickAdd: handleQuickAdd, onUndo: handleUndoDelete, onRedo: handleRedoDelete,

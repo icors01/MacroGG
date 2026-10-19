@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Modal } from "../ui/Modal";
+import { useDialogFeedback } from "./ui/Feedback";
 import { PlusCircle, Trash2, Edit2, Pin } from "lucide-react";
 
-export const CustomMealModal = ({
+export const SavedMealsPanel = ({
   isOpen,
-  onClose,
   customMeals,
   onSaveMeal,
   onAddMeal,
@@ -12,11 +11,11 @@ export const CustomMealModal = ({
   pinnedMealIds = [],
   onTogglePin,
   isPinPending = false,
-  allowClickOutside = false,
-  secondaryColor = "#3b82f6",
   primaryColor = "#22c55e",
 }) => {
   const content = useRef(null);
+  const feedback = useDialogFeedback();
+  const clearFeedback = feedback?.clearDialog;
   const [newMealData, setNewMealData] = useState({
     name: "",
     calories: "",
@@ -28,6 +27,15 @@ export const CustomMealModal = ({
   const [isCreating, setIsCreating] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
   const [editMealData, setEditMealData] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsCreating(false);
+      setEditingMealId(null);
+      setEditMealData(null);
+      clearFeedback?.("saved-meals");
+    }
+  }, [isOpen, clearFeedback]);
 
   useEffect(() => {
     if (!isOpen || (!editingMealId && !isCreating)) return;
@@ -135,25 +143,38 @@ export const CustomMealModal = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      title={
-        editingMealId
-          ? "Edit saved meal"
-          : isCreating
-            ? "New saved meal"
-            : "Saved meals"
-      }
-      onClose={() => {
-        if (saving) return;
-        onClose();
-        setIsCreating(false);
-        setEditingMealId(null);
-        setEditMealData(null);
-      }}
-      allowClickOutside={allowClickOutside}
-      titleColor={secondaryColor}
-    >
+    <div className="saved-meals-panel app-dialog">
+      <div className="saved-panel-heading">
+        <h3>
+          {editingMealId
+            ? "Edit saved meal"
+            : isCreating
+              ? "New saved meal"
+              : "Your saved meals"}
+        </h3>
+        {(editingMealId || isCreating) && (
+          <button
+            type="button"
+            className="text-button"
+            disabled={saving}
+            onClick={() => {
+              setIsCreating(false);
+              setEditingMealId(null);
+              setEditMealData(null);
+            }}
+          >
+            Back to list
+          </button>
+        )}
+      </div>
+      {feedback?.inline?.dialogId === "saved-meals" && (
+        <p
+          role={feedback.inline.type === "error" ? "alert" : "status"}
+          className={`dialog-feedback ${feedback.inline.fading ? "is-fading" : ""} ${feedback.inline.type === "error" ? "dialog-danger" : "dialog-accent"}`}
+        >
+          {feedback.inline.message}
+        </p>
+      )}
       <div className="space-y-4" ref={content}>
         {onTogglePin && !editingMealId && !isCreating && (
           <p className="dialog-muted">
@@ -224,7 +245,9 @@ export const CustomMealModal = ({
         )}
 
         {!isCreating && (
-          <div className="saved-meals-list space-y-2">
+          <div
+            className={`saved-meals-list space-y-2 ${editingMealId ? "is-editing" : ""}`}
+          >
             {customMeals.length === 0 ? (
               <p className="text-gray-400 text-center pt-4">
                 No saved meals yet. Add one you make often.
@@ -374,6 +397,6 @@ export const CustomMealModal = ({
           </div>
         )}
       </div>
-    </Modal>
+    </div>
   );
 };
