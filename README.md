@@ -4,7 +4,7 @@ A simple nutrition journal for tracking calories, protein, carbs, and fat.
 
 ## What you can do
 
-- **Log food your way:** describe a meal for an AI estimate, enter macros manually, or scan a barcode.
+- **Log food your way:** describe a meal for an AI estimate, enter macros manually, or scan a barcode or nutrition label.
 - **Save your favorites:** browse, add, and edit meals in an expandable sidebar panel; pin up to three for one-tap logging.
 - **Get recommendations:** Quick add suggests foods you log regularly, with your pinned meals first.
 - **Track your progress:** set daily goals, get help estimating targets, browse past logs, and undo or redo changes.
@@ -42,6 +42,14 @@ Signup verification currently uses the EmailJS configuration in `src/components/
 Open **Goals → Help me set my goals**. Enter your measurements, activity, and goal—or provide your own maintenance estimate. Review and edit the suggested calories and macros, then select **Apply goals** to save. Canceling keeps your current goals.
 
 Calculations use Mifflin–St Jeor and conservative calorie adjustments. An optional Gemini explanation describes the starting calculation; it cannot change your targets. Body metrics stay in the dialog and are not sent to Gemini or saved. The local demo offers a sample explanation without an AI request.
+
+## Scan a barcode or nutrition label
+
+Open **Scan food**. The camera detects barcodes automatically; use **Read nutrition label** to photograph the panel, or upload a JPEG, PNG, or WebP photo. If a barcode is missing from the database, read its label instead.
+
+Both methods open the same review form. Check the meal name, macros, portion basis, and amount eaten, then confirm before adding. Unreadable values stay blank for you to fill in. You can also combine several reviewed items into one meal and save it from the food log.
+
+Label photos are sent to Google Gemini for transcription using the server-side `GEMINI_API_KEY`. The app does not save the photos to Firestore. In the local demo, **Scan food** offers sample barcode and label reviews without camera access or AI requests.
 
 ## How Quick add works
 

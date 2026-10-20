@@ -375,7 +375,7 @@ export default function Dashboard({
                       className="text-button"
                       onClick={actions.onScanner}
                     >
-                      <Camera size={16} /> Scan barcode
+                      <Camera size={16} /> Scan food
                     </button>
                   </div>
                   <button

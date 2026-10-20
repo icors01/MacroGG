@@ -574,7 +574,7 @@ const App = () => {
     }
   };
 
-  const addEntryToLog = useCallback(async (entry, { errorScope } = {}) => {
+  const addEntryToLog = useCallback(async (entry, { errorScope, preservePrecision = false } = {}) => {
     if (!dbInstance || !userId) {
       showError("Database not ready.", "error", { scope: errorScope });
       return false;
@@ -582,14 +582,15 @@ const App = () => {
     
     const today = getLocalDateString();
     
+    const precision = preservePrecision ? 10 : 1;
     const newEntry = {
       id: crypto.randomUUID(),
       date: today,
       food: entry.food || "Unknown Entry",
-      calories: Math.round(entry.calories || 0),
-      protein: Math.round(entry.protein || 0),
-      carbs: Math.round(entry.carbs || 0), 
-      fat: Math.round(entry.fat || 0),
+      calories: Math.round((entry.calories || 0) * precision) / precision,
+      protein: Math.round((entry.protein || 0) * precision) / precision,
+      carbs: Math.round((entry.carbs || 0) * precision) / precision,
+      fat: Math.round((entry.fat || 0) * precision) / precision,
     };
 
     try {
@@ -1118,7 +1119,7 @@ const App = () => {
   undoAction.current = handleUndoDelete;
 
   // --- Scanner Product Handler ---
-  const handleScannerProduct = (productEntry) => addEntryToLog(productEntry);
+  const handleScannerProduct = (productEntry) => addEntryToLog(productEntry, { preservePrecision: true });
 
   // --- Render ---
   return (

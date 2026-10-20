@@ -1979,3 +1979,136 @@ h2 {
     transition: none;
   }
 }
+
+.scanner-content,
+.scanner-review {
+  display: grid;
+  gap: 16px;
+}
+.scanner-camera {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #171c19;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.scanner-camera.hidden {
+  display: none;
+}
+.scanner-camera video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scanner-camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #c5cec8;
+  font-size: 12px;
+  pointer-events: none;
+}
+.scanner-capture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scanner-capture-actions .button {
+  flex: 1;
+}
+.scanner-barcode {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.scanner-barcode > div {
+  display: flex;
+  gap: 8px;
+}
+.scanner-barcode input {
+  flex: 1;
+  width: 0;
+}
+.scanner-macro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.scanner-error,
+.scanner-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.scanner-error {
+  color: #b5443f;
+}
+.dark .scanner-error {
+  color: #f3958f;
+}
+.scanner-error svg,
+.scanner-status svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.scanner-warnings {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 12px 12px 26px;
+  list-style: disc;
+  font-size: 12px;
+  color: var(--muted);
+}
+.scanner-totals {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.scanner-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.scanner-confirm input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.scanner-label-photo {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+.scanner-items {
+  display: grid;
+  gap: 8px;
+}
+.scanner-items > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.scanner-items span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.scanner-review .dialog-actions {
+  margin-top: 0;
+}
+@media (max-width: 380px) {
+  .scanner-macro-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

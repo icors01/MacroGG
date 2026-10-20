@@ -5,6 +5,7 @@ import { getPinnedMeals, togglePinnedMeal } from "./utils/pinnedMeals";
 import { rankUsualFoods } from "./utils/usualFoods";
 import { useJournalDate } from "./hooks/useJournalDate";
 import { Modal } from "./components/ui/Modal";
+import { ScannerModal } from "./components/modals/ScannerModal";
 import { ManualEntryModal } from "./components/modals/ManualEntryModal";
 import { SavedMealsPanel } from "./components/SavedMealsPanel";
 import { EditLogModal } from "./components/modals/EditLogModal";
@@ -239,6 +240,7 @@ export default function DemoApp() {
               },
               onToggleTheme: () => setIsDarkMode((mode) => !mode),
               onManual: () => setModal("manual"),
+              onScanner: () => setModal("scanner"),
               onMeals: () => setIsMealsOpen(true),
               onToggleMeals: () => setIsMealsOpen((open) => !open),
               onGoals: () => setModal("goals"),
@@ -299,6 +301,7 @@ export default function DemoApp() {
               return true;
             }}
           />
+          <ScannerModal isOpen={modal === "scanner"} onClose={close} onProductFound={addEntry} demo />
           <ManualEntryModal
             isOpen={modal === "manual"}
             onClose={close}
