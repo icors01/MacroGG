@@ -584,10 +584,7 @@ h2 {
 }
 .usual-foods {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 16px) / 3);
-  overflow-x: auto;
-  padding-bottom: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 .usual-chip {
@@ -632,12 +629,33 @@ h2 {
 }
 @media (max-width: 700px) {
   .usual-foods {
-    display: flex;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    gap: 6px;
   }
   .usual-chip {
-    flex: 0 0 160px;
+    display: block;
+    padding: 16px 8px 10px;
+    min-height: 96px;
+  }
+  .usual-chip strong {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+  }
+  .usual-chip small {
+    padding-right: 12px;
+    line-height: 1.5;
+  }
+  .usual-chip > svg:not(.chip-pin) {
+    position: absolute;
+    right: 6px;
+    bottom: 8px;
+    width: 12px;
+    height: 12px;
+  }
+  .usual-chip.pinned-chip .usual-chip-copy {
+    padding-left: 0;
   }
 }
 .food-log {
@@ -1906,7 +1924,7 @@ h2 {
   max-width: none;
   max-height: none;
   overflow: visible;
-  padding: 14px;
+  padding: 12px;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -2111,4 +2129,43 @@ h2 {
   .scanner-macro-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Compact saved-meal rows follow the journal's text hierarchy. */
+.saved-meals-panel .saved-panel-heading {
+  margin-bottom: 10px;
+}
+.saved-panel-content.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 12px;
+}
+.saved-meals-panel .saved-meal-card {
+  padding: 10px;
+}
+.saved-meals-panel .saved-meal-name {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.saved-meals-panel .saved-meal-macros {
+  font-size: 10px;
+  line-height: 1.5;
+}
+.saved-meals-panel p.dialog-muted {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.saved-meals-panel .saved-meal-row {
+  gap: 3px;
+}
+.saved-meals-panel .saved-meal-actions button {
+  min-height: 28px;
+  width: 28px;
+  padding: 5px;
+}
+.saved-meals-panel .saved-meal-actions svg {
+  width: 16px;
+  height: 16px;
+}
+.saved-meals-list.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 6px;
 }

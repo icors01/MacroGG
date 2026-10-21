@@ -175,7 +175,7 @@ export const SavedMealsPanel = ({
           {feedback.inline.message}
         </p>
       )}
-      <div className="space-y-4" ref={content}>
+      <div className="saved-panel-content space-y-4" ref={content}>
         {onTogglePin && !editingMealId && !isCreating && (
           <p className="dialog-muted">
             Pin up to 3 meals for quick access on your journal.{" "}
@@ -258,7 +258,7 @@ export const SavedMealsPanel = ({
                 .map((meal) => (
                   <div
                     key={meal.id}
-                    className="bg-gray-700 p-3 rounded-lg shadow-md"
+                    className="saved-meal-card bg-gray-700 p-3 rounded-lg shadow-md"
                   >
                     {editingMealId === meal.id ? (
                       <form
@@ -322,12 +322,12 @@ export const SavedMealsPanel = ({
                     ) : (
                       <div className="saved-meal-row flex items-center justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-100 truncate">
+                          <p className="saved-meal-name font-medium text-gray-100 truncate">
                             {meal.name}
                           </p>
-                          <p className="text-xs text-gray-400">
-                            {meal.calories}kcal | P:{meal.protein}g | C:
-                            {meal.carbs}g | F:{meal.fat}g
+                          <p className="saved-meal-macros text-xs text-gray-400">
+                            {meal.calories} kcal · P {meal.protein}g · C
+                            {meal.carbs}g · F {meal.fat}g
                           </p>
                         </div>
                         <div className="saved-meal-actions flex gap-2">
