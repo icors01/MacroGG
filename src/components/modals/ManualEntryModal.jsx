@@ -12,10 +12,10 @@ export const ManualEntryModal = ({
 }) => {
   const [formData, setFormData] = useState({
     food: "",
-    calories: "0",
-    protein: "0",
-    carbs: "0",
-    fat: "0",
+    calories: "",
+    protein: "",
+    carbs: "",
+    fat: "",
   });
 
   const handleChange = (e) => {
@@ -46,10 +46,10 @@ export const ManualEntryModal = ({
         if ((await onSave(entry)) === false) return;
         setFormData({
           food: "",
-          calories: "0",
-          protein: "0",
-          carbs: "0",
-          fat: "0",
+          calories: "",
+          protein: "",
+          carbs: "",
+          fat: "",
         });
         onClose();
       } finally {
