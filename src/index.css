@@ -2169,3 +2169,103 @@ h2 {
 .saved-meals-list.space-y-2 > :not([hidden]) ~ :not([hidden]) {
   margin-top: 6px;
 }
+
+/* One clear add action; occasional management lives behind the menu. */
+.saved-meals-panel .saved-meal-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.saved-meals-panel .saved-meal-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+.saved-meal-copy {
+  min-width: 0;
+  padding-top: 3px;
+}
+.saved-meals-panel p.saved-meal-name {
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 550;
+  margin-bottom: 4px;
+}
+.saved-meal-name > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.saved-meal-pin {
+  flex-shrink: 0;
+  color: var(--accent-text, var(--accent));
+  transform: rotate(-30deg);
+}
+.saved-meals-panel .saved-meal-macros {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.saved-meal-primary-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.saved-meals-panel .saved-meal-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 28px;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--accent-text, var(--accent));
+  font-size: 11px;
+  font-weight: 550;
+}
+.saved-meal-add:hover {
+  background: var(--accent-soft);
+}
+.saved-meals-panel .saved-meal-more {
+  min-height: 26px;
+  width: 28px;
+  padding: 3px;
+  color: var(--muted);
+}
+.saved-meal-menu {
+  grid-column: 1 / -1;
+  display: grid;
+  padding-top: 5px;
+  border-top: 1px solid var(--line);
+  gap: 2px;
+}
+.saved-meals-panel .saved-meal-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 11px;
+}
+.saved-meal-menu button:hover,
+.saved-meal-menu button:focus-visible {
+  background: var(--surface-soft);
+}
+.saved-meal-menu button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.saved-meal-menu .saved-meal-delete {
+  color: #b5443f;
+}
+.dark .saved-meal-menu .saved-meal-delete {
+  color: #f3958f;
+}

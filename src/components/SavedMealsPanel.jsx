@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDialogFeedback } from "./ui/Feedback";
-import { PlusCircle, Trash2, Edit2, Pin } from "lucide-react";
+import {
+  PlusCircle,
+  Trash2,
+  Edit2,
+  Pin,
+  Plus,
+  MoreHorizontal,
+} from "lucide-react";
 
 export const SavedMealsPanel = ({
   isOpen,
@@ -14,6 +21,8 @@ export const SavedMealsPanel = ({
   primaryColor = "#22c55e",
 }) => {
   const content = useRef(null);
+  const menuOwner = useRef(null);
+  const [menuMealId, setMenuMealId] = useState(null);
   const feedback = useDialogFeedback();
   const clearFeedback = feedback?.clearDialog;
   const [newMealData, setNewMealData] = useState({
@@ -30,6 +39,7 @@ export const SavedMealsPanel = ({
 
   useEffect(() => {
     if (!isOpen) {
+      setMenuMealId(null);
       setIsCreating(false);
       setEditingMealId(null);
       setEditMealData(null);
@@ -42,6 +52,52 @@ export const SavedMealsPanel = ({
     content.current?.closest(".app-dialog")?.scrollTo({ top: 0 });
     content.current?.querySelector("input")?.focus({ preventScroll: true });
   }, [isOpen, editingMealId, isCreating]);
+
+  useEffect(() => {
+    if (!menuMealId) return;
+    menuOwner.current
+      ?.querySelector('[role="menuitem"]:not(:disabled)')
+      ?.focus({ preventScroll: true });
+    const outside = (event) => {
+      if (!menuOwner.current?.contains(event.target)) setMenuMealId(null);
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [menuMealId]);
+  const closeMenu = () => {
+    menuOwner.current
+      ?.querySelector('[aria-haspopup="menu"]')
+      ?.focus({ preventScroll: true });
+    setMenuMealId(null);
+  };
+  const menuKeys = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenu();
+      return;
+    }
+    const items = [
+      ...event.currentTarget.querySelectorAll(
+        '[role="menuitem"]:not(:disabled)',
+      ),
+    ];
+    const index = items.indexOf(document.activeElement);
+    const next =
+      event.key === "ArrowDown"
+        ? (index + 1) % items.length
+        : event.key === "ArrowUp"
+          ? (index - 1 + items.length) % items.length
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? items.length - 1
+              : null;
+    if (next !== null) {
+      event.preventDefault();
+      items[next]?.focus();
+    }
+  };
 
   const handleNewMealChange = (e) => {
     const { name, value } = e.target;
@@ -320,75 +376,128 @@ export const SavedMealsPanel = ({
                         </div>
                       </form>
                     ) : (
-                      <div className="saved-meal-row flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="saved-meal-name font-medium text-gray-100 truncate">
-                            {meal.name}
+                      <div
+                        className="saved-meal-row"
+                        ref={menuMealId === meal.id ? menuOwner : null}
+                        onBlurCapture={(event) => {
+                          if (
+                            menuMealId === meal.id &&
+                            !event.currentTarget.contains(event.relatedTarget)
+                          )
+                            setMenuMealId(null);
+                        }}
+                      >
+                        <div className="saved-meal-copy">
+                          <p className="saved-meal-name" title={meal.name}>
+                            {pinnedMealIds.includes(meal.id) && (
+                              <Pin
+                                size={11}
+                                className="saved-meal-pin"
+                                aria-label="Pinned"
+                              />
+                            )}
+                            <span>{meal.name}</span>
                           </p>
-                          <p className="saved-meal-macros text-xs text-gray-400">
-                            {meal.calories} kcal · P {meal.protein}g · C
+                          <p className="saved-meal-macros">
+                            {meal.calories} kcal · P {meal.protein}g · C{" "}
                             {meal.carbs}g · F {meal.fat}g
                           </p>
                         </div>
-                        <div className="saved-meal-actions flex gap-2">
-                          {onTogglePin && (
-                            <button
-                              type="button"
-                              onClick={() => onTogglePin(meal)}
-                              className={`icon-button ${pinnedMealIds.includes(meal.id) ? "meal-is-pinned" : ""}`}
-                              aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
-                              aria-pressed={pinnedMealIds.includes(meal.id)}
-                              disabled={
-                                isPinPending ||
-                                (!pinnedMealIds.includes(meal.id) &&
-                                  pinnedMealIds.length >= 3)
-                              }
-                              title={
-                                pinnedMealIds.includes(meal.id)
-                                  ? "Unpin meal"
-                                  : pinnedMealIds.length >= 3
-                                    ? "Unpin a meal to free a spot"
-                                    : "Pin to journal"
-                              }
-                            >
-                              <Pin
-                                size={18}
-                                fill={
-                                  pinnedMealIds.includes(meal.id)
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                              />
-                            </button>
-                          )}
+                        <div className="saved-meal-primary-actions">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            type="button"
+                            className="saved-meal-add"
+                            aria-label={`Add ${meal.name} to log`}
+                            onClick={() => {
+                              setMenuMealId(null);
                               onAddMeal(meal);
                             }}
-                            className="icon-button"
-                            title="Add to log"
-                            aria-label={`Add ${meal.name} to log`}
                           >
-                            <PlusCircle size={20} />
+                            <Plus size={13} />
+                            Add
                           </button>
                           <button
-                            onClick={() => handleEditClick(meal)}
-                            className="icon-button"
-                            title="Edit meal"
-                            aria-label={`Edit saved meal ${meal.name}`}
+                            type="button"
+                            className="icon-button saved-meal-more"
+                            aria-label={`Options for ${meal.name}`}
+                            aria-haspopup="menu"
+                            aria-expanded={menuMealId === meal.id}
+                            onClick={() =>
+                              setMenuMealId((old) =>
+                                old === meal.id ? null : meal.id,
+                              )
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "ArrowDown") {
+                                event.preventDefault();
+                                setMenuMealId(meal.id);
+                              }
+                            }}
                           >
-                            <Edit2 size={20} />
-                          </button>
-                          <button
-                            onClick={() => onDeleteMeal(meal)}
-                            className="icon-button"
-                            title="Delete meal"
-                            aria-label={`Delete saved meal ${meal.name}`}
-                          >
-                            <Trash2 size={20} />
+                            <MoreHorizontal size={17} />
                           </button>
                         </div>
+                        {menuMealId === meal.id && (
+                          <div
+                            className="saved-meal-menu"
+                            role="menu"
+                            aria-label={`Manage ${meal.name}`}
+                            onKeyDown={menuKeys}
+                          >
+                            {onTogglePin && (
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={
+                                  isPinPending ||
+                                  (!pinnedMealIds.includes(meal.id) &&
+                                    pinnedMealIds.length >= 3)
+                                }
+                                title={
+                                  !pinnedMealIds.includes(meal.id) &&
+                                  pinnedMealIds.length >= 3
+                                    ? "Unpin a meal to free a spot"
+                                    : undefined
+                                }
+                                aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
+                                onClick={() => {
+                                  closeMenu();
+                                  onTogglePin(meal);
+                                }}
+                              >
+                                <Pin size={14} />
+                                {pinnedMealIds.includes(meal.id)
+                                  ? "Unpin meal"
+                                  : "Pin to journal"}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              role="menuitem"
+                              aria-label={`Edit saved meal ${meal.name}`}
+                              onClick={() => {
+                                closeMenu();
+                                handleEditClick(meal);
+                              }}
+                            >
+                              <Edit2 size={14} />
+                              Edit meal
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="saved-meal-delete"
+                              aria-label={`Delete saved meal ${meal.name}`}
+                              onClick={() => {
+                                closeMenu();
+                                onDeleteMeal(meal);
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              Delete meal
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
