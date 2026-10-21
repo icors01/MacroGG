@@ -2269,3 +2269,70 @@ h2 {
 .dark .saved-meal-menu .saved-meal-delete {
   color: #f3958f;
 }
+
+.saved-meal-menu.saved-meal-popover {
+  position: fixed;
+  z-index: 110;
+  width: 180px;
+  max-width: calc(100vw - 20px);
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 8px 28px #10201726;
+}
+.saved-meal-popover::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--surface);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.saved-meal-popover[data-placement="right"]::before {
+  left: -5px;
+  top: calc(var(--menu-arrow) - 4px);
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.saved-meal-popover[data-placement="below"]::before {
+  top: -5px;
+  left: calc(var(--menu-arrow) - 4px);
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+}
+.saved-meal-popover[data-placement="above"]::before {
+  bottom: -5px;
+  left: calc(var(--menu-arrow) - 4px);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.saved-meal-popover button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-align: left;
+}
+.saved-meal-popover {
+  animation: meal-popover-appear 120ms ease-out;
+}
+@keyframes meal-popover-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .saved-meal-popover {
+    animation: none;
+  }
+}

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useDialogFeedback } from "./ui/Feedback";
 import {
   PlusCircle,
@@ -22,6 +23,8 @@ export const SavedMealsPanel = ({
 }) => {
   const content = useRef(null);
   const menuOwner = useRef(null);
+  const popover = useRef(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const [menuMealId, setMenuMealId] = useState(null);
   const feedback = useDialogFeedback();
   const clearFeedback = feedback?.clearDialog;
@@ -55,15 +58,99 @@ export const SavedMealsPanel = ({
 
   useEffect(() => {
     if (!menuMealId) return;
-    menuOwner.current
-      ?.querySelector('[role="menuitem"]:not(:disabled)')
-      ?.focus({ preventScroll: true });
     const outside = (event) => {
-      if (!menuOwner.current?.contains(event.target)) setMenuMealId(null);
+      if (
+        !menuOwner.current?.contains(event.target) &&
+        !popover.current?.contains(event.target)
+      )
+        setMenuMealId(null);
     };
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
   }, [menuMealId]);
+  useLayoutEffect(() => {
+    if (!menuMealId) return;
+    const position = () => {
+      const anchor = menuOwner.current?.querySelector('[aria-haspopup="menu"]');
+      const menu = popover.current;
+      if (!anchor || !menu) return;
+      const rect = anchor.getBoundingClientRect();
+      const list = anchor.closest(".saved-meals-list")?.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const vx = viewport?.offsetLeft || 0,
+        vy = viewport?.offsetTop || 0;
+      const width = viewport?.width || innerWidth,
+        height = viewport?.height || innerHeight;
+      if (
+        rect.bottom < Math.max(vy, list?.top || 0) ||
+        rect.top > Math.min(vy + height, list?.bottom || vy + height)
+      ) {
+        setMenuMealId(null);
+        return;
+      }
+      const box = menu.getBoundingClientRect();
+      const rightFits = rect.right + 10 + box.width <= vx + width - 10;
+      const belowFits = rect.bottom + 10 + box.height <= vy + height - 10;
+      const placement = rightFits ? "right" : belowFits ? "below" : "above";
+      const left = Math.max(
+        vx + 10,
+        Math.min(
+          rightFits ? rect.right + 10 : rect.right - box.width,
+          vx + width - box.width - 10,
+        ),
+      );
+      const top = Math.max(
+        vy + 10,
+        Math.min(
+          rightFits
+            ? rect.top - 8
+            : belowFits
+              ? rect.bottom + 10
+              : rect.top - box.height - 10,
+          vy + height - box.height - 10,
+        ),
+      );
+      setMenuPosition({
+        left,
+        top,
+        placement,
+        arrow: rightFits
+          ? Math.max(
+              10,
+              Math.min(rect.top + rect.height / 2 - top, box.height - 10),
+            )
+          : Math.max(
+              10,
+              Math.min(rect.left + rect.width / 2 - left, box.width - 10),
+            ),
+      });
+    };
+    position();
+    const scroll = (event) => {
+      if (!popover.current?.contains(event.target)) position();
+    };
+    window.addEventListener("scroll", scroll, true);
+    window.addEventListener("resize", position);
+    window.visualViewport?.addEventListener("resize", position);
+    window.visualViewport?.addEventListener("scroll", position);
+    return () => {
+      window.removeEventListener("scroll", scroll, true);
+      window.removeEventListener("resize", position);
+      window.visualViewport?.removeEventListener("resize", position);
+      window.visualViewport?.removeEventListener("scroll", position);
+    };
+  }, [menuMealId]);
+
+  useEffect(() => {
+    if (!menuMealId || !menuPosition) return;
+    const focusFrame = requestAnimationFrame(() =>
+      popover.current
+        ?.querySelector('[role="menuitem"]:not(:disabled)')
+        ?.focus({ preventScroll: true }),
+    );
+    return () => cancelAnimationFrame(focusFrame);
+  }, [menuMealId, Boolean(menuPosition)]);
+
   const closeMenu = () => {
     menuOwner.current
       ?.querySelector('[aria-haspopup="menu"]')
@@ -71,6 +158,10 @@ export const SavedMealsPanel = ({
     setMenuMealId(null);
   };
   const menuKeys = (event) => {
+    if (event.key === "Tab") {
+      closeMenu();
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
@@ -382,7 +473,10 @@ export const SavedMealsPanel = ({
                         onBlurCapture={(event) => {
                           if (
                             menuMealId === meal.id &&
-                            !event.currentTarget.contains(event.relatedTarget)
+                            !event.currentTarget.contains(
+                              event.relatedTarget,
+                            ) &&
+                            !popover.current?.contains(event.relatedTarget)
                           )
                             setMenuMealId(null);
                         }}
@@ -428,76 +522,111 @@ export const SavedMealsPanel = ({
                               )
                             }
                             onKeyDown={(event) => {
+                              if (
+                                event.key === "Escape" &&
+                                menuMealId === meal.id
+                              ) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                closeMenu();
+                              }
                               if (event.key === "ArrowDown") {
                                 event.preventDefault();
-                                setMenuMealId(meal.id);
+                                if (menuMealId === meal.id)
+                                  popover.current
+                                    ?.querySelector(
+                                      '[role="menuitem"]:not(:disabled)',
+                                    )
+                                    ?.focus({ preventScroll: true });
+                                else setMenuMealId(meal.id);
                               }
                             }}
                           >
                             <MoreHorizontal size={17} />
                           </button>
                         </div>
-                        {menuMealId === meal.id && (
-                          <div
-                            className="saved-meal-menu"
-                            role="menu"
-                            aria-label={`Manage ${meal.name}`}
-                            onKeyDown={menuKeys}
-                          >
-                            {onTogglePin && (
+                        {menuMealId === meal.id &&
+                          createPortal(
+                            <div
+                              ref={popover}
+                              className="saved-meal-menu saved-meal-popover"
+                              data-placement={menuPosition?.placement}
+                              style={{
+                                left: menuPosition?.left ?? 0,
+                                top: menuPosition?.top ?? 0,
+                                visibility: menuPosition ? "visible" : "hidden",
+                                "--menu-arrow": `${menuPosition?.arrow ?? 16}px`,
+                              }}
+                              onBlurCapture={(event) => {
+                                if (
+                                  !event.currentTarget.contains(
+                                    event.relatedTarget,
+                                  ) &&
+                                  !menuOwner.current?.contains(
+                                    event.relatedTarget,
+                                  )
+                                )
+                                  setMenuMealId(null);
+                              }}
+                              role="menu"
+                              aria-label={`Manage ${meal.name}`}
+                              onKeyDown={menuKeys}
+                            >
+                              {onTogglePin && (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  disabled={
+                                    isPinPending ||
+                                    (!pinnedMealIds.includes(meal.id) &&
+                                      pinnedMealIds.length >= 3)
+                                  }
+                                  title={
+                                    !pinnedMealIds.includes(meal.id) &&
+                                    pinnedMealIds.length >= 3
+                                      ? "Unpin a meal to free a spot"
+                                      : undefined
+                                  }
+                                  aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
+                                  onClick={() => {
+                                    closeMenu();
+                                    onTogglePin(meal);
+                                  }}
+                                >
+                                  <Pin size={14} />
+                                  {pinnedMealIds.includes(meal.id)
+                                    ? "Unpin meal"
+                                    : "Pin to journal"}
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 role="menuitem"
-                                disabled={
-                                  isPinPending ||
-                                  (!pinnedMealIds.includes(meal.id) &&
-                                    pinnedMealIds.length >= 3)
-                                }
-                                title={
-                                  !pinnedMealIds.includes(meal.id) &&
-                                  pinnedMealIds.length >= 3
-                                    ? "Unpin a meal to free a spot"
-                                    : undefined
-                                }
-                                aria-label={`${pinnedMealIds.includes(meal.id) ? "Unpin" : "Pin"} ${meal.name}`}
+                                aria-label={`Edit saved meal ${meal.name}`}
                                 onClick={() => {
                                   closeMenu();
-                                  onTogglePin(meal);
+                                  handleEditClick(meal);
                                 }}
                               >
-                                <Pin size={14} />
-                                {pinnedMealIds.includes(meal.id)
-                                  ? "Unpin meal"
-                                  : "Pin to journal"}
+                                <Edit2 size={14} />
+                                Edit meal
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              role="menuitem"
-                              aria-label={`Edit saved meal ${meal.name}`}
-                              onClick={() => {
-                                closeMenu();
-                                handleEditClick(meal);
-                              }}
-                            >
-                              <Edit2 size={14} />
-                              Edit meal
-                            </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="saved-meal-delete"
-                              aria-label={`Delete saved meal ${meal.name}`}
-                              onClick={() => {
-                                closeMenu();
-                                onDeleteMeal(meal);
-                              }}
-                            >
-                              <Trash2 size={14} />
-                              Delete meal
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="saved-meal-delete"
+                                aria-label={`Delete saved meal ${meal.name}`}
+                                onClick={() => {
+                                  closeMenu();
+                                  onDeleteMeal(meal);
+                                }}
+                              >
+                                <Trash2 size={14} />
+                                Delete meal
+                              </button>
+                            </div>,
+                            content.current.closest(".app-shell"),
+                          )}
                       </div>
                     )}
                   </div>
