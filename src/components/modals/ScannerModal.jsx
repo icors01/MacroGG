@@ -1,3 +1,4 @@
+import { apiFetch } from "../../utils/apiFetch";
 import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "../ui/Modal";
 import { Camera, Upload, Loader2, AlertCircle, Trash2 } from "lucide-react";
@@ -205,7 +206,7 @@ export const ScannerModal = ({
       const payload = await makePhoto();
       if (session.current !== token) return;
       setPhoto(`data:${payload.mimeType};base64,${payload.image}`);
-      const response = await fetch("/api/scan-nutrition-label", {
+      const response = await apiFetch("/api/scan-nutrition-label", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

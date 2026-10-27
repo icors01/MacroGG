@@ -1,3 +1,4 @@
+import { requireApiUser } from "../server/api-security.js";
 import dotenv from "dotenv";
 import {
   validateLabelImage,
@@ -20,6 +21,7 @@ export default async function handler(req, res) {
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }
+  if (!await requireApiUser(req, res)) return;
   if (!process.env.GEMINI_API_KEY)
     return res
       .status(503)

@@ -1,3 +1,4 @@
+import { apiFetch } from "./utils/apiFetch";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   onAuthStateChanged,
@@ -644,7 +645,7 @@ const App = () => {
 
     try {
       // Call serverless function to hide API key
-      const response = await fetch('/api/ai-food-entry', {
+      const response = await apiFetch('/api/ai-food-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: aiInput })

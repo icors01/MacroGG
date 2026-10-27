@@ -1,3 +1,4 @@
+import { requireApiUser } from "../server/api-security.js";
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,6 +9,7 @@ dotenv.config({ path: path.join(__dirname, '.env.local') });
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
     return res.status(405).json({ error: "Method Not Allowed" });
@@ -15,11 +17,13 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const input = (body?.input || "").toString().trim();
+    const input = typeof body?.input === "string" ? body.input.trim() : "";
 
-    if (!input) {
-      return res.status(400).json({ error: "Missing input." });
+    if (!input || input.length > 2000) {
+      return res.status(400).json({ error: "Enter a food description of 1–2000 characters." });
     }
+
+    if (!await requireApiUser(req, res)) return;
 
     const apiKey = process.env.GEMINI_API_KEY;
     const model = (process.env.GEMINI_MODEL || "gemini-2.5-flash").replace(/^models\//, "");
@@ -64,18 +68,16 @@ export default async function handler(req, res) {
       }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      signal: AbortSignal.timeout(20000),
       body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status).json({
-        error: `Gemini API error (${response.status}): ${errorText || response.statusText}`
-      });
+      return res.status(502).json({ error: "Food estimates are temporarily unavailable. Please try again." });
     }
 
     const result = await response.json();
@@ -103,9 +105,16 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json(parsedData);
+    if (typeof parsedData.description !== "string" || !parsedData.description.trim() ||
+        !["calories", "protein", "carbs", "fat"].every(key =>
+          Number.isFinite(parsedData[key]) && parsedData[key] >= 0 && parsedData[key] <= 100000))
+      return res.status(502).json({ error: "Could not read nutrition values. Please try again." });
+    return res.status(200).json({
+      description: parsedData.description.trim().slice(0, 200),
+      ...Object.fromEntries(["calories", "protein", "carbs", "fat"].map(key => [key, parsedData[key]])),
+    });
   } catch (error) {
-    console.error("AI endpoint error:", error);
+    if (error instanceof SyntaxError) return res.status(400).json({ error: "Invalid request." });
     return res.status(500).json({ error: "Server error processing AI request." });
   }
 }

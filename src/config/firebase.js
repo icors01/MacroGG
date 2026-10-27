@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, setLogLevel } from "firebase/firestore";
 
 // --- Firebase Configuration ---
-// Uses environment variables if available, otherwise falls back to hardcoded config
+// Public Firebase web-app settings; access is enforced by Auth and Firestore rules.
 const firebaseConfig = typeof __firebase_config !== 'undefined'
     ? JSON.parse(__firebase_config)
     : {

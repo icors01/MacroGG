@@ -1,3 +1,4 @@
+import { apiFetch } from "../../utils/apiFetch";
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import {
@@ -141,7 +142,7 @@ export default function GoalHelper({
     controller.current = request;
     const timeout = setTimeout(() => request.abort(), 20000);
     try {
-      const response = await fetch("/api/explain-goals", {
+      const response = await apiFetch("/api/explain-goals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(goalExplanationPayload(result)),

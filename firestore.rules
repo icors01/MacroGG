@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owns(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/settings/{document} {
+      allow read, write: if owns(userId);
+    }
+    match /artifacts/{appId}/users/{userId}/logs/{document} {
+      allow read, write: if owns(userId);
+    }
+    // Keep access to the owner's legacy journal for the existing migration.
+    match /artifacts/{appId}/users/{userId}/calorieTracker/{document} {
+      allow read, write: if owns(userId);
+    }
+    // Everything else, including obsolete verification/reset records, is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

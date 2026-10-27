@@ -28,3 +28,7 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# All environment variants, except the documented template
+.env.*
+!.env.example

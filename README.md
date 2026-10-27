@@ -35,7 +35,7 @@ The demo uses sample data, needs no credentials, and resets when refreshed. It m
 
 Use a Firebase test project for development. Keep `.env.local` out of Git and keep the Gemini key server-side—never prefix it with `VITE_`.
 
-Signup verification currently uses the EmailJS configuration in `src/components/modals/AuthModal.jsx`. The separate `/api/send-email` endpoint uses the `EMAILJS_*` variables in `.env.example`.
+Signup verification and password reset use Firebase Authentication email links. The legacy email endpoint is disabled. See [deployment and security setup](DEPLOYMENT.md) before publishing.
 
 ## Get help setting goals
 
@@ -84,3 +84,5 @@ React · Vite · Firebase Auth & Firestore · Tailwind CSS · Google Gemini · O
 ## Latest updates — October 16, 2026
 
 Refreshed the journal and dialogs, added named palettes and a local demo, introduced recommendations and pinned meals, and improved keyboard food entry.
+
+Security configuration and remaining console checks: [SECURITY.md](SECURITY.md).

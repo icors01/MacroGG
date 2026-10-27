@@ -1,3 +1,4 @@
+import { requireApiUser } from "../server/api-security.js";
 import dotenv from "dotenv";
 import { validateGoalDraft } from "../src/utils/goalRecommendations.js";
 dotenv.config({ path: ".env.local", quiet: true });
@@ -36,6 +37,7 @@ export default async function handler(req, res) {
   } catch {
     return res.status(400).json({ error: "Invalid goal calculation." });
   }
+  if (!await requireApiUser(req, res)) return;
   if (!process.env.GEMINI_API_KEY)
     return res.status(503).json({
       error:

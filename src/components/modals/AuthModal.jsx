@@ -4,12 +4,13 @@ import {
   createUserWithEmailAndPassword,
   linkWithCredential,
   EmailAuthProvider,
+  sendEmailVerification,
 } from "firebase/auth";
 import { auth, db, appId } from "../../config/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { requestPasswordReset } from "../../utils/passwordReset";
 import { Modal } from "../ui/Modal";
-import { Loader2, LogIn, UserPlus, Mail, Shield } from "lucide-react";
+import { Loader2, LogIn, UserPlus, Mail } from "lucide-react";
 
 export const AuthModal = ({
   isOpen,
@@ -21,12 +22,9 @@ export const AuthModal = ({
 }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [sentCode, setSentCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handlePasswordReset = async (e) => {
@@ -50,83 +48,9 @@ export const AuthModal = ({
     }
   };
 
-  const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-
-  const sendVerificationCode = async (e) => {
+  const createAccount = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const code = generateVerificationCode();
-      setSentCode(code);
-
-      // Store the code in Firestore temporarily (expires in 10 minutes)
-      const verificationDoc = doc(
-        db,
-        `artifacts/${appId}/verifications/${email.replace(/[.#$[\]]/g, "_")}`,
-      );
-      await setDoc(verificationDoc, {
-        code: code,
-        email: email,
-        username: username,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-      });
-
-      // Send email using EmailJS
-      const emailResponse = await fetch(
-        "https://api.emailjs.com/api/v1.0/email/send",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            service_id: "service_mi80wf4",
-            template_id: "template_wl9dyrb",
-            user_id: "tqkBQnWQ6VE7SKplj",
-            template_params: {
-              email: email,
-              to_name: username,
-              verification_code: code,
-            },
-          }),
-        },
-      );
-
-      if (emailResponse.ok) {
-        setIsVerifyingCode(true);
-        if (onShowSuccess) {
-          onShowSuccess(
-            `Verification code sent to ${email}! Please check your inbox.`,
-          );
-        } else {
-          onShowError(
-            `Verification code sent to ${email}! Please check your inbox.`,
-            "success",
-          );
-        }
-      } else {
-        const errorData = await emailResponse.text();
-        console.error("EmailJS error response:", errorData);
-        throw new Error(`Failed to send verification email: ${errorData}`);
-      }
-    } catch (error) {
-      onShowError("Failed to send verification code. Please try again.");
-      console.error("Verification email error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyCodeAndCreateAccount = async (e) => {
-    e.preventDefault();
-    if (verificationCode !== sentCode) {
-      onShowError("Invalid verification code. Please try again.");
-      return;
-    }
-
+    if (loading) return;
     setLoading(true);
     try {
       // Upgrade the guest account in place so its meals keep the same user ID.
@@ -143,18 +67,23 @@ export const AuthModal = ({
       );
       await setDoc(userDoc, { username: username.trim() }, { merge: true });
 
+      // Firebase verifies ownership on its hosted page, never in browser state.
+      let verificationSent = true;
+      try { await sendEmailVerification(userCredential.user); }
+      catch { verificationSent = false; }
       // Close modal on success
       onClose();
       setEmail("");
       setPassword("");
       setUsername("");
-      setVerificationCode("");
-      setSentCode("");
-      setIsVerifyingCode(false);
       if (onShowSuccess) {
-        onShowSuccess("Account created successfully!");
+        onShowSuccess(verificationSent
+          ? "Account created. Check your email for a verification link."
+          : "Account created, but the verification email could not be sent. You can still sign in.");
       } else {
-        onShowError("Account created successfully!", "success");
+        onShowError(verificationSent
+          ? "Account created. Check your email for a verification link."
+          : "Account created, but the verification email could not be sent. You can still sign in.", "success");
       }
     } catch (error) {
       let message = "An unknown authentication error occurred.";
@@ -267,81 +196,6 @@ export const AuthModal = ({
     );
   }
 
-  // Verification code View (for sign up only)
-  if (isVerifyingCode) {
-    return (
-      <Modal
-        isOpen={isOpen}
-        title="Verify email"
-        onClose={onClose}
-        allowClickOutside={false}
-        titleColor="#3b82f6"
-      >
-        <form
-          onSubmit={verifyCodeAndCreateAccount}
-          className="space-y-4 text-gray-200"
-        >
-          <p className="text-sm text-gray-400">
-            Enter the 6-digit verification code sent to{" "}
-            <span className="dialog-accent">{email}</span>
-          </p>
-          <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              htmlFor="verify-code"
-            >
-              Verification code
-            </label>
-            <input
-              id="verify-code"
-              type="text"
-              value={verificationCode}
-              onChange={(e) =>
-                setVerificationCode(
-                  e.target.value.replace(/\D/g, "").slice(0, 6),
-                )
-              }
-              required
-              maxLength={6}
-              className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 text-center text-2xl tracking-widest"
-              placeholder="000000"
-            />
-          </div>
-          <button
-            type="submit"
-            className="button button-primary w-full disabled:bg-gray-500"
-            style={{ backgroundColor: loading ? undefined : primaryColor }}
-            onMouseEnter={(e) =>
-              !loading && (e.currentTarget.style.opacity = "0.8")
-            }
-            onMouseLeave={(e) =>
-              !loading && (e.currentTarget.style.opacity = "1")
-            }
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <Shield size={18} />
-            )}
-            {loading ? "Creating Account..." : "Verify & create account"}
-          </button>
-        </form>
-
-        <button
-          onClick={() => {
-            setIsVerifyingCode(false);
-            setVerificationCode("");
-            setSentCode("");
-          }}
-          className="w-full text-sm mt-4 dialog-link transition-colors"
-        >
-          Back to sign up
-        </button>
-      </Modal>
-    );
-  }
-
   return (
     <Modal
       isOpen={isOpen}
@@ -351,7 +205,7 @@ export const AuthModal = ({
       titleColor="#3b82f6"
     >
       <form
-        onSubmit={isLogin ? handleAuth : sendVerificationCode}
+        onSubmit={isLogin ? handleAuth : createAccount}
         className="space-y-4 text-gray-200"
       >
         {!isLogin && (
