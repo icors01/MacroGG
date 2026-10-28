@@ -62,3 +62,13 @@ revoked/disabled accounts can retain API access until their existing token expir
 
 See [deployment instructions](DEPLOYMENT.md) for the console steps. Do not post
 secrets, raw tokens, private user data or database exports in public issues.
+
+## AI availability update
+
+Food entry retries a temporary Google 500/502/503/504 once. If that retry fails
+(or the configured model returns 404), it lists models using the same server-side
+key and tries at most one other plain Flash model advertising generateContent.
+It does not bypass authentication, permission or quota errors. All calls share a
+25-second deadline; only the final successful result is returned for journal saving.
+Model discovery confirms advertised availability, not guaranteed capacity or schema
+support. No production key or real AI generation was used in the regression tests.

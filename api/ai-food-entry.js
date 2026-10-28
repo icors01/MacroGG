@@ -1,3 +1,4 @@
+import { requestFoodProvider } from "../server/food-provider.js";
 import { providerError } from "../server/provider-error.js";
 import { requireApiUser } from "../server/api-security.js";
 import dotenv from 'dotenv';
@@ -69,13 +70,7 @@ export default async function handler(req, res) {
       }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      signal: AbortSignal.timeout(20000),
-      body: JSON.stringify(payload)
-    });
+    const response = await requestFoodProvider({ model, apiKey, payload });
 
     if (!response.ok) {
       const failure = await providerError(response);
@@ -116,6 +111,8 @@ export default async function handler(req, res) {
       ...Object.fromEntries(["calories", "protein", "carbs", "fat"].map(key => [key, parsedData[key]])),
     });
   } catch (error) {
+    if (error.name === "TimeoutError" || error.name === "AbortError")
+      return res.status(504).json({ error: "AI took too long to respond. Your entry was not added; please try again.", code: "AI_TIMEOUT" });
     if (error instanceof SyntaxError) return res.status(400).json({ error: "Invalid request." });
     return res.status(500).json({ error: "Server error processing AI request." });
   }
