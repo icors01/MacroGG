@@ -651,12 +651,10 @@ const App = () => {
         body: JSON.stringify({ input: aiInput })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API call failed (${response.status}): ${errorText || response.statusText}`);
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result) {
+        throw new Error(result?.error || "AI is temporarily unavailable. Please try again later.");
       }
-
-      const result = await response.json();
 
       if (result.error) {
         throw new Error(result.error);
@@ -675,7 +673,7 @@ const App = () => {
     } catch (error) {
       console.error("Error processing AI request: ", error);
       const errorMessage = error?.message ? `AI Error: ${error.message}` : "AI Error: Couldn't process the request.";
-      showError(`${errorMessage} Try rephrasing (e.g., 'Add 300 calories, 20g protein, 30g carbs, 10g fat').`, 'error', { scope: 'food-entry' });
+      showError(errorMessage, 'error', { scope: 'food-entry' });
     } finally {
       setIsLoading(false);
     }

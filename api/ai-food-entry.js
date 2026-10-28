@@ -1,3 +1,4 @@
+import { providerError } from "../server/provider-error.js";
 import { requireApiUser } from "../server/api-security.js";
 import dotenv from 'dotenv';
 import path from 'path';
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
     const model = (process.env.GEMINI_MODEL || "gemini-2.5-flash").replace(/^models\//, "");
 
     if (!apiKey) {
-      return res.status(500).json({ error: "Server missing GEMINI_API_KEY." });
+      return res.status(503).json({ error: "AI is not configured. Set GEMINI_API_KEY for Production in Vercel and redeploy.", code: "AI_NOT_CONFIGURED" });
     }
 
     const systemPrompt =
@@ -77,7 +78,8 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      return res.status(502).json({ error: "Food estimates are temporarily unavailable. Please try again." });
+      const failure = await providerError(response);
+      return res.status(failure.status).json({ error: failure.error, code: failure.code });
     }
 
     const result = await response.json();

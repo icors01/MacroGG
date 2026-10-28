@@ -53,7 +53,7 @@ test('API limit is enforced on the server for authenticated users', async t => {
 test('AI food input/output bounds and provider errors cannot expose credentials', async t => {
   mockEnv(t, 'VITE_FIREBASE_PROJECT_ID', 'test-project');
   mockEnv(t, 'GEMINI_API_KEY', 'test-private-key');
-  let reply = { ok: false, text: async () => 'test-private-key provider internal details' };
+  let reply = { ok: false, status: 500, json: async () => ({ error: { message: 'test-private-key provider internal details' } }) };
   const calls = [];
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (isKeysUrl(url)) return keyReply(); calls.push({ url, options }); return reply;
