@@ -1,3 +1,4 @@
+import { useRecentMeals } from "./hooks/useRecentMeals";
 import { apiFetch } from "./utils/apiFetch";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
@@ -150,6 +151,7 @@ const App = () => {
   });
   
   const journalDate = useJournalDate();
+  const recentMeals = useRecentMeals(dbInstance, appId, userId, isAuthReady, journalDate, aiInput.trim().length >= 2);
   const usualFoods = useUsualFoods(dbInstance, appId, userId, isAuthReady, journalDate, pinnedMeals);
 
   // --- Utility Functions ---
@@ -1327,7 +1329,7 @@ const App = () => {
           }
           historyButtonRef={historyButtonRef}
           theme={{ isDarkMode }}
-          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, isMealsOpen, pinnedMeals, usualFoods, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
+          data={{ totals, goals: { dailyGoal, proteinGoal, carbGoal, fatGoal }, foodLog, customMeals, isMealsOpen, pinnedMeals, usualFoods, recentMeals, recentOwner: userId, isAuthReady, isLoading, aiInput, currentStreak, isTrackingCarbs, isTrackingFat, undoCount: undoStack.length, redoCount: redoStack.length }}
           account={{ user: currentUser, username, isEditingName, nameInput, nameStyle: activeColorScheme ? { color: 'var(--accent-text, var(--accent))' } : { backgroundImage: `linear-gradient(100deg, ${nameGradientStart}, ${nameGradientMiddle}, ${nameGradientEnd})`, backgroundClip: 'text', color: 'transparent', textShadow: nameGlowIntensity > 0 ? `0 0 ${nameGlowIntensity / 3}px ${nameGlow}` : 'none' } }}
           actions={{
             onSupport: () => setIsSupportModalOpen(true), onToggleTheme: toggleTheme,
@@ -1337,6 +1339,7 @@ const App = () => {
             onGoals: () => setIsGoalModalOpen(true), onHistory: handleViewHistory,
             onReset: () => setIsResetConfirmOpen(true), onMeals: () => setIsMealsOpen(true),
             onToggleMeals: () => setIsMealsOpen(open => !open),
+            onRecentAdd: entry => addEntryToLog(entry, { preservePrecision: true }),
             onAiAdd: handleAiAdd, onAiInput: setAiInput,
             onManual: () => setIsManualEntryOpen(true), onScanner: () => setIsScannerOpen(true),
             onPinnedAdd: handleAddMealToLog, onQuickAdd: handleQuickAdd, onUndo: handleUndoDelete, onRedo: handleRedoDelete,

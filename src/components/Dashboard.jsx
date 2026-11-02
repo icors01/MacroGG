@@ -1,3 +1,4 @@
+import { RecentMealInput } from "./RecentMealInput";
 import React, { useId, useRef } from "react";
 import {
   ArrowRight,
@@ -58,6 +59,8 @@ export default function Dashboard({
     customMeals,
     isMealsOpen = false,
     usualFoods = [],
+    recentMeals = [],
+    recentOwner = "demo",
     pinnedMeals = [],
     isAuthReady,
     isLoading,
@@ -336,30 +339,9 @@ export default function Dashboard({
                 </p>
               )}
               <form onSubmit={actions.onAiAdd}>
-                <label className="sr-only" htmlFor="ai-input">
-                  Describe your food
-                </label>
-                <textarea
-                  id="ai-input"
-                  rows={2}
-                  value={aiInput}
-                  onChange={(e) => actions.onAiInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key !== "Enter" ||
-                      e.shiftKey ||
-                      e.nativeEvent.isComposing ||
-                      e.keyCode === 229
-                    )
-                      return;
-                    e.preventDefault();
-                    if (!e.repeat && !isLoading && aiInput.trim()) {
-                      e.currentTarget.form?.requestSubmit();
-                    }
-                  }}
-                  placeholder="A bowl of oats, a banana, and a spoonful of peanut butter…"
-                  disabled={isLoading}
-                />
+                <RecentMealInput key={recentOwner} value={aiInput} onChange={actions.onAiInput}
+                  meals={recentMeals} disabled={isLoading} onAdd={actions.onRecentAdd}
+                  primaryColor="var(--accent)" />
                 <div className="entry-toolbar">
                   <div className="entry-alternatives">
                     <button

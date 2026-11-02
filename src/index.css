@@ -2336,3 +2336,22 @@ h2 {
     animation: none;
   }
 }
+
+.recent-meal-input { position: relative; }
+.recent-meal-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 25;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 14%); padding: 6px;
+  animation: recent-meals-in 130ms ease-out;
+}
+.recent-meal-heading { display: flex; align-items: center; gap: 6px; padding: 7px 9px 9px; color: var(--muted); font-size: 11px; }
+.recent-meal-heading small { margin-left: auto; font-size: 10px; }
+.recent-meal-dropdown ul { list-style: none; padding: 0; margin: 0; max-height: 290px; overflow-y: auto; }
+.recent-meal-dropdown button { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; padding: 10px; border: 0; border-radius: 6px; text-align: left; background: transparent; color: var(--text); }
+.recent-meal-dropdown button:hover, .recent-meal-dropdown button[aria-selected="true"] { background: var(--surface-soft); }
+.recent-meal-dropdown button span { min-width: 0; }
+.recent-meal-dropdown strong { display: block; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.recent-meal-dropdown button small { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); }
+.recent-meal-dropdown button svg { flex-shrink: 0; color: var(--muted); }
+@keyframes recent-meals-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .recent-meal-dropdown { animation: none; } }

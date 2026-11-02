@@ -1,3 +1,4 @@
+import { recentUniqueMeals } from "./utils/recentMeals";
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { FeedbackContext, Toast, useFeedback } from "./components/ui/Feedback";
 import Dashboard from "./components/Dashboard";
@@ -220,6 +221,7 @@ export default function DemoApp() {
               customMeals,
               isMealsOpen,
               usualFoods,
+              recentMeals: recentUniqueMeals([{ date: journalDate, entries: foodLog }], journalDate),
               pinnedMeals,
               isAuthReady: true,
               isLoading: false,
@@ -230,6 +232,7 @@ export default function DemoApp() {
               redoCount: redo.length,
             }}
             actions={{
+              onRecentAdd: addEntry,
               onPinnedAdd: addEntry,
               onAiInput: setAiInput,
               onAiAdd: (e) => {

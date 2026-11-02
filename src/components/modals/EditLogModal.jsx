@@ -9,6 +9,8 @@ export const EditLogModal = ({
   onSave,
   allowClickOutside = false,
   primaryColor = "#22c55e",
+  title = "Edit entry",
+  submitLabel = "Save changes",
 }) => {
   const [formData, setFormData] = useState(
     item || {
@@ -45,6 +47,7 @@ export const EditLogModal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (saving) return;
     setSaving(true);
     try {
@@ -59,7 +62,7 @@ export const EditLogModal = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Edit entry"
+      title={title}
       onClose={() => {
         if (!saving) onClose();
       }}
@@ -100,6 +103,7 @@ export const EditLogModal = ({
                 value={formData[macro]}
                 onChange={handleChange}
                 min="0"
+                step="any"
                 required
                 className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600"
               />
@@ -114,7 +118,7 @@ export const EditLogModal = ({
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          <Save size={18} /> Save changes
+          <Save size={18} /> {submitLabel}
         </button>
       </form>
     </Modal>
