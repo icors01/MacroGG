@@ -1,4 +1,4 @@
-import React, { useId, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Clock3, ArrowUpRight } from "lucide-react";
 import { matchRecentMeals } from "../utils/recentMeals.js";
@@ -13,11 +13,26 @@ export function RecentMealInput({
   primaryColor,
 }) {
   const id = useId(),
-    input = useRef(null);
+    input = useRef(null),
+    container = useRef(null);
   const [focused, setFocused] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
   const [review, setReview] = useState(null);
+  useEffect(() => {
+    const outside = event => {
+      if (!container.current?.contains(event.target)) {
+        setFocused(false);
+        setActiveKey(null);
+      }
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("focusin", outside);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("focusin", outside);
+    };
+  }, []);
   const matches = matchRecentMeals(meals, value);
   const open =
     focused && !dismissed && !review && !disabled && matches.length > 0;
@@ -33,7 +48,7 @@ export function RecentMealInput({
   };
   return (
     <>
-      <div className="recent-meal-input">
+      <div className="recent-meal-input" ref={container}>
         <label className="sr-only" htmlFor="ai-input">
           Describe your food
         </label>
@@ -52,16 +67,13 @@ export function RecentMealInput({
           value={value}
           disabled={disabled}
           onFocus={() => setFocused(true)}
-          onBlur={() => {
-            setFocused(false);
-            setActiveKey(null);
-          }}
           onChange={(event) => {
             onChange(event.target.value);
             setDismissed(false);
             setActiveKey(null);
           }}
           onKeyDown={(event) => {
+            if (event.key === "Tab") { setFocused(false); setActiveKey(null); }
             if (event.nativeEvent.isComposing || event.keyCode === 229) return;
             if (open && ["ArrowDown", "ArrowUp"].includes(event.key)) {
               event.preventDefault();

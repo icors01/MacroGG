@@ -44,7 +44,10 @@ export function useRecentMeals(db, appId, userId, ready, today, enabled) {
           if (active && version === generation)
             setState({ owner, today, meals });
         };
-        publish();
+        // Show the first available page on initial load only. Subsequent
+        // refreshes leave the complete previous result visible until ready.
+        setState(previous => previous.owner === owner && previous.today === today
+          ? previous : { owner, today, meals });
         let docs = snapshot.docs;
         // Thirty unique meals, rather than thirty days. Read older pages only
         // when repetitions leave too few distinct portions in the first page.
@@ -67,16 +70,21 @@ export function useRecentMeals(db, appId, userId, ready, today, enabled) {
               })),
             );
             meals = recentUniqueMeals(days, today);
-            publish();
           }
         } catch {
           /* Search is optional; retain the pages already read. */
         }
+        // Publish one complete result. A metadata refresh must not briefly
+        // replace older matches with just the newest page while paging again.
+        publish();
       },
-      () => {
+      error => {
         if (active) {
           generation++;
-          setState({ owner, today, meals: [] });
+          // Keep this account's already loaded results on a failed refresh,
+          // just as the journal retains its offline data. Owner/date checks
+          // below still prevent stale results crossing account boundaries.
+          console.warn("Could not refresh recent meals:", error?.code || "unavailable");
         }
       },
     );
