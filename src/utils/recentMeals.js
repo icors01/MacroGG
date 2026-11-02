@@ -36,7 +36,16 @@ export function recentUniqueMeals(days, today, limit = 30) {
 export function matchRecentMeals(meals, input) {
   const search = normalizeMealSearch(input);
   if (search.length < 2) return [];
-  return meals
+  // One row per name, using its most recent confirmed portion. The review
+  // remains editable; do not average distinct portions or repeat the name.
+  const names = new Set();
+  const distinct = meals.filter(meal => {
+    const name = normalizeMealSearch(meal.food);
+    if (names.has(name)) return false;
+    names.add(name);
+    return true;
+  });
+  return distinct
     .filter((meal) => normalizeMealSearch(meal.food).includes(search))
     .sort(
       (a, b) =>

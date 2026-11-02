@@ -108,7 +108,7 @@ export function RecentMealInput({
             <div className="recent-meal-heading">
               <Clock3 size={13} />
               <span>Recent meals</span>
-              <small>Review before adding</small>
+              <small>Last used portion</small>
             </div>
             <ul id={id} role="listbox" aria-label="Recent meals">
               {matches.map((meal, index) => (

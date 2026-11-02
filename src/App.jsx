@@ -226,8 +226,16 @@ const App = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+  const toggleTheme = async () => {
+    const next = !isDarkMode;
+    setIsDarkMode(next);
+    if (!dbInstance || !userId || !currentUser) return;
+    try {
+      await setDoc(doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`),
+        { isDarkMode: next }, { merge: true });
+    } catch {
+      showError("Theme changed on this device, but could not be saved to your account. Please try again.");
+    }
   };
   
   // --- Firebase Initialization and Auth ---
@@ -316,7 +324,7 @@ const App = () => {
     try {
       const settingsRef = doc(dbInstance, `artifacts/${appId}/users/${userId}/settings/preferences`);
       // Update only appearance/profile fields. Saved meals and goals are untouched.
-      await updateDoc(settingsRef, { username: settings.username, colorScheme: schemeId, ...palette });
+      await updateDoc(settingsRef, { username: settings.username, colorScheme: schemeId, isDarkMode, ...palette });
       setUsername(settings.username);
       setColorScheme(schemeId);
       if (schemeId) {
@@ -465,6 +473,7 @@ const App = () => {
         setIsTrackingCarbs(data.isTrackingCarbs || false);
         setIsTrackingFat(data.isTrackingFat || false);
         setUsername(data.username || '');
+        if (typeof data.isDarkMode === 'boolean') setIsDarkMode(data.isDarkMode);
         
         // Legacy custom colors remain intact until a named scheme is chosen.
         setColorScheme(isColorScheme(data.colorScheme) ? data.colorScheme : (data.primaryColor ? null : DEFAULT_SCHEME_ID));

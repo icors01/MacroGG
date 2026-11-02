@@ -126,3 +126,16 @@ test("recent query is account scoped, newest first and paged in 30-document batc
     await deleteApp(app);
   }
 });
+
+test('dropdown shows repeated names once using the newest portion, without averaging', () => {
+  const meals = recentUniqueMeals([{ date: today, entries: [
+    meal('Protein Powder', { calories: 100, protein: 20 }),
+    meal('Protein Powder', { calories: 320, protein: 50 }),
+    meal(' protein powder ', { calories: 190, protein: 40 }),
+  ] }], today);
+  assert.equal(meals.length, 3);
+  const matches = matchRecentMeals(meals, 'pro');
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].calories, 190);
+  assert.equal(matches[0].protein, 40);
+});

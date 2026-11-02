@@ -6,10 +6,10 @@ A simple nutrition journal for tracking calories, protein, carbs, and fat.
 
 - **Log food your way:** describe a meal for an AI estimate, enter macros manually, or scan a barcode or nutrition label.
 - **Save your favorites:** browse, add, and edit meals in an expandable sidebar panel; pin up to three for one-tap logging.
-- **Find a recent meal:** type two letters in the food-entry box to search your last 30 unique portions; review the macros before adding.
+- **Find a recent meal:** type two letters in the food-entry box to search your last 30 unique portions; each name appears once with its last-used portion. Review the macros before adding.
 - **Get recommendations:** Quick add suggests foods you log regularly, with your pinned meals first.
 - **Track your progress:** set daily goals, get help estimating targets, browse past logs, and undo or redo changes.
-- **Make it yours:** choose from six color schemes with light/dark modes and live previews.
+- **Make it yours:** choose from six color schemes with light/dark modes and live previews. Saved palettes and mode follow your account.
 - **Keep your data synced:** sign in to save meals, goals, and logs across devices. Password resets use an emailed link.
 
 **Entry shortcuts:** Enter submits your food description. Shift+Enter adds a new line. Unused manual-entry macros default to zero.
